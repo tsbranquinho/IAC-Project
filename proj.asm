@@ -50,7 +50,7 @@ MOV  SP, SP_inicial        ; inicializa SP para a palavra a seguir
 	MOV  R1, LINHA	   	; para guardar a linha que está a ser testada
 	MOV  R7, ZERO
 
-	
+
 ; corpo principal do programa
 ciclo:
     MOV  R0, ZERO
@@ -73,7 +73,8 @@ espera_tecla:          	; neste ciclo espera-se até uma tecla ser premida
 	CALL converte_valor	; reseta o contador (R7)
 	MOV R0, R7			; copia o novo valor da coluna para o R0
 	CALL conv_hexa		; converte a tecla premida para um valor hexadecimal
-    MOVB [R4], R6      	; escreve linha e coluna nos displays
+    MOV [R4], R6      	; escreve linha e coluna nos displays
+	
     
 ha_tecla:              	; neste ciclo espera-se até NENHUMA tecla estar premida
     MOVB R0, [R3]      	; ler do periférico de entrada (colunas)
@@ -93,6 +94,6 @@ valor_ciclo:  	   		; transforma o valor das linhas e colunas para 0,1,2,3
 	RET
 	
 conv_hexa:
-	SHR R6, 2
-	ADD R6, R0
+	SHR R6, 2           ; multiplica o valor da linha por 4
+	ADD R6, R0          ; adiciona o valor da coluna e guarda no R6
 	RET
