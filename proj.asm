@@ -49,13 +49,13 @@ MOV  SP, SP_inicial        ; inicializa SP para a palavra a seguir
     MOV  R5, MASCARA   	; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
 	MOV  R1, LINHA	   	; para guardar a linha que está a ser testada
 	MOV  R7, ZERO
+	MOV  R11, ZERO
 
 
 ; corpo principal do programa
 ciclo:
-    MOV  R0, ZERO
 	MOV R1, LINHA
-    MOVB [R4], R0      	; escreve linha e coluna a zero nos displays
+    MOV [R4], R11      	; escreve linha e coluna a zero nos displays
 
 espera_tecla:          	; neste ciclo espera-se até uma tecla ser premida
     ROL R1, 1	
@@ -73,7 +73,7 @@ espera_tecla:          	; neste ciclo espera-se até uma tecla ser premida
 	CALL converte_valor	; reseta o contador (R7)
 	MOV R0, R7			; copia o novo valor da coluna para o R0
 	CALL conv_hexa		; converte a tecla premida para um valor hexadecimal
-    MOV [R4], R6      	; escreve linha e coluna nos displays
+	CALL verifica_tecla ; verifica se a tecla premida corresponde a um comando
 	
     
 ha_tecla:              	; neste ciclo espera-se até NENHUMA tecla estar premida
@@ -97,3 +97,24 @@ conv_hexa:
 	SHR R6, 2           ; multiplica o valor da linha por 4
 	ADD R6, R0          ; adiciona o valor da coluna e guarda no R6
 	RET
+	
+verifica_tecla:
+	MOV R0, 000AH
+	CMP R6, R0
+	JZ aumenta_display
+	
+	MOV R0, 000BH
+	CMP R6, R0
+	JZ diminui_display
+	RET
+	
+aumenta_display:
+	 ADD R11, 1
+	 MOV [R4], R11
+	 RET
+	 
+diminui_display:
+	 SUB R11, 1
+	 MOV [R4], R11
+	 RET
+	
