@@ -1536,12 +1536,6 @@
       "relative stop time" : 1.0,
       "playAsClip" : false
     }, {
-      "filePathName" : "VIDEO_FUNDO.mp4",
-      "relative sound volume" : 1.0,
-      "relative start time" : 0.0,
-      "relative stop time" : 1.0,
-      "playAsClip" : false
-    }, {
       "filePathName" : "COLISÃO_ASTERÓIDE.mp4",
       "relative sound volume" : 1.0,
       "relative start time" : 0.0,
@@ -1550,6 +1544,12 @@
     }, {
       "filePathName" : "MOVIMENTO_ASTERÓIDE.mp4",
       "relative sound volume" : 0.88,
+      "relative start time" : 0.0,
+      "relative stop time" : 1.0,
+      "playAsClip" : false
+    }, {
+      "filePathName" : "VIDEO_FUNDO_3.mp4",
+      "relative sound volume" : 1.0,
       "relative start time" : 0.0,
       "relative stop time" : 1.0,
       "playAsClip" : false
