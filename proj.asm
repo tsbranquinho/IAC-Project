@@ -32,22 +32,29 @@ APAGA_ECRÃ	 		EQU COMANDOS + 02H		; endereço do comando para apagar todos os p
 SELECIONA_CENARIO_FUNDO  EQU COMANDOS + 42H		; endereço do comando para selecionar uma imagem de fundo
 TOCA_SOM				EQU COMANDOS + 5AH		; endereço do comando para tocar um som
 
-LINHA_AST        	EQU  0        ; linha do asteroide (primeira linha)
-COLUNA_AST			EQU  0        ; coluna do asteroide (primeira coluna)
-LARGURA				EQU	5		; largura do asteroide
-ALTURA_AST			EQU  5		; altura do asteroide
 
-LINHA_NAVE        	EQU  24        ; linha do asteroide (primeira linha)
-COLUNA_NAVE			EQU  25       ; coluna do asteroide (primeira coluna)
+LINHA_NAVE        	EQU  24        ; linha da nave (primeira linha)
+COLUNA_NAVE			EQU  25       ; coluna da nave (primeira coluna)
 LARGURA_NAVE		EQU	 15		; largura da nave
 ALTURA_NAVE			EQU  8		; altura da nave
+
+LINHA_TIRO       	EQU  23        ; linha da sonda (primeira linha)
+COLUNA_TIRO			EQU  32       ; coluna da sonda (primeira coluna)
+
+LINHA_AST        	EQU  0        ; linha do asteroide (primeira linha)
+COLUNA_AST			EQU  0        ; coluna do asteroide (primeira coluna)
+LARGURA_AST			EQU	5		; largura do asteroide
+ALTURA_AST			EQU  5		; altura do asteroide
+
+
 
 MIN_COLUNA		EQU  0		; número da coluna mais à esquerda que o objeto pode ocupar
 MAX_COLUNA		EQU  63        ; número da coluna mais à direita que o objeto pode ocupar
 ATRASO			EQU	400H		; atraso para limitar a velocidade de movimento do boneco
 
-COR_PIXEL			EQU	0FF00H	; cor do pixel: vermelho em ARGB (opaco e vermelho no máximo, verde e azul a 0)
+COR_PIXEL			EQU	0B566H	; cor do pixel: vermelho em ARGB (opaco e vermelho no máximo, verde e azul a 0)
 COR_2				EQU 02200H	;
+COR_TIRO			EQU 0FF00H
 
 
 ; **********************************************************************
@@ -70,6 +77,16 @@ DEF_NAVE:					; tabela que define o boneco (cor, largura, pixels)
 	WORD 		COR_2, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_2
 	WORD		COR_2, COR_2, COR_2, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_2, COR_2, COR_2
 	WORD		COR_2, COR_2, COR_2, COR_2, COR_2, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_2, COR_2, COR_2, COR_2, COR_2
+	
+DEF_AST:
+	WORD 		COR_2, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_2
+	WORD 		COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL
+	WORD 		COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL
+	WORD 		COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL
+	WORD 		COR_2, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_2
+	
+DEF_TIRO:
+	WORD		COR_TIRO
 						
 ; **********************************************************************
 ; * Código
@@ -98,6 +115,8 @@ MOV  SP, SP_inicial		; inicializa SP para a palavra a seguir
 	MOV	R7, 1			; valor a somar à coluna do boneco, para o movimentar
 
 	CALL desenha_nave
+	CALL desenha_tiro
+	CALL desenha_ast
 
 ; corpo principal do programa
 ciclo:
@@ -167,8 +186,9 @@ diminui_display:
 
 
 
-
-
+;*****************************************************************
+; ****************** NAVE ***************************************
+;*****************************************************************
 desenha_nave:
 	PUSH R1
 	PUSH R2
@@ -181,26 +201,77 @@ desenha_nave:
 	MOV R4, DEF_NAVE
 	MOV R5, LARGURA_NAVE
 	MOV R6, ALTURA_NAVE
+	JMP linha_seguinte		; comeca a desenhar a nave
 	
-ciclo_nave:
+ciclo_nave:					; altera os valores para desenhar a próxima linha da nave
 	MOV R2, COLUNA_NAVE
 	MOV R5, LARGURA_NAVE
 	ADD R1, 1
 	SUB R6, 1
-	JNZ linha_seguinte	
-	POP R6
+	JNZ linha_seguinte		
+	POP R6					; repoe todos os valores nos seus registos
 	POP R5
 	POP R4
 	POP R3
 	POP R2
 	POP R1
-	RET
+	RET						; volta quando terminou de desenhar a nave
 
 linha_seguinte:
 	CALL desenha_pixels
 	JMP ciclo_nave
+	
+	
+;*****************************************************************
+; ****************** TIRO ***************************************
+;*****************************************************************
+desenha_tiro:
+	PUSH R1
+	PUSH R2
+	PUSH R3
+	MOV R1, LINHA_TIRO
+	MOV R2, COLUNA_TIRO
+	MOV R3, COR_TIRO
+	CALL escreve_pixel
+	POP R3
+	POP R2
+	POP R1
+	RET
 
-
+;*****************************************************************
+; ****************** ASTEROIDE ***********************************
+;*****************************************************************
+desenha_ast:
+	PUSH R1
+	PUSH R2
+	PUSH R3
+	PUSH R4
+	PUSH R5
+	PUSH R6
+	MOV R1, LINHA_AST
+	MOV R2, COLUNA_AST
+	MOV R4, DEF_AST
+	MOV R5, LARGURA_AST
+	MOV R6, ALTURA_AST
+	JMP linha_seguinte2			;começa a desenhar o asteroide
+	
+ciclo_ast:						; altera os valores para desenhar a proxima linha do asteroide
+	MOV R2, COLUNA_AST
+	MOV R5, LARGURA_AST
+	ADD R1, 1
+	SUB R6, 1
+	JNZ linha_seguinte2	
+	POP R6						; repoe todos os valores nos seus registos
+	POP R5
+	POP R4
+	POP R3
+	POP R2
+	POP R1
+	RET							; volta quando terminou de desenhar o asteroide
+	
+linha_seguinte2:
+	CALL desenha_pixels
+	JMP ciclo_ast
 
 
 ; **********************************************************************
