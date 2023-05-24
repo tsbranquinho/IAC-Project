@@ -86,6 +86,7 @@ DEF_AST:
 	WORD 		COR_2, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_2
 	
 DEF_TIRO:
+	WORD 		LINHA_TIRO, COLUNA_TIRO
 	WORD		COR_TIRO
 						
 ; **********************************************************************
@@ -105,6 +106,7 @@ MOV  SP, SP_inicial		; inicializa SP para a palavra a seguir
     MOV  R5, MASCARA   	; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
 	MOV  R1, 1   		; para guardar a linha que está a ser testada
 	MOV  R7, ZERO		; iniciar o R7 a zero
+	MOV  R10, LINHA_TIRO; registo com a linha do tiro
 	MOV  R11, ZERO		; registo com o valor do display
 
                             
@@ -164,13 +166,17 @@ conv_hexa:
 	RET
 	
 verifica_tecla:
-	MOV R0, 4			; guarda o valor 5 em R0
-	CMP R6, R0			; testa se a tecla premida é o 5
+	MOV R0, 4			; guarda o valor 4 em R0
+	CMP R6, R0			; testa se a tecla premida é a 4
 	JZ aumenta_display	; incrementa o valor do display
 	
-	MOV R0, 5			; guarda o valor 6 em R0
-	CMP R6, R0			; testa se a tecla premida é o 6
+	MOV R0, 5			; guarda o valor 5 em R0
+	CMP R6, R0			; testa se a tecla premida é a 5
 	JZ diminui_display	; decrementa o valor do display
+	
+	MOV R0, 6			; guarda o valor 6 em R0
+	CMP R6, R0			; testa se a tecla premida é a 6
+	CALL move_tiro		; desloca o tiro uma linha para cima
 	RET
 	
 aumenta_display:
@@ -229,9 +235,29 @@ desenha_tiro:
 	PUSH R1
 	PUSH R2
 	PUSH R3
-	MOV R1, LINHA_TIRO
+	MOV R1, R10				; R10 tem o valor da linha do tiro guardado
 	MOV R2, COLUNA_TIRO
 	MOV R3, COR_TIRO
+	CALL escreve_pixel
+	POP R3
+	POP R2
+	POP R1
+	RET
+
+move_tiro:
+	CALL apaga_tiro
+	SUB R10, 1
+	CALL desenha_tiro
+	RET
+	
+	
+apaga_tiro:
+	PUSH R1
+	PUSH R2
+	PUSH R3
+	MOV R1, R10				; R10 tem o valor da linha do tiro guardado
+	MOV R2, COLUNA_TIRO
+	MOV R3, 0
 	CALL escreve_pixel
 	POP R3
 	POP R2
