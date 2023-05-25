@@ -19,8 +19,6 @@ TEC_LIN    EQU 0C000H  ; endereço das linhas do teclado (periférico POUT-2)
 TEC_COL    EQU 0E000H  ; endereço das colunas do teclado (periférico PIN)
 ZERO       EQU 0
 MASCARA    EQU 0FH     ; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
-TECLA_ESQUERDA			EQU 1		; tecla na primeira coluna do teclado (tecla C)
-TECLA_DIREITA			EQU 2		; tecla na segunda coluna do teclado (tecla D)
 
 COMANDOS				EQU	6000H			; endereço de base dos comandos do MediaCenter
 
@@ -28,8 +26,8 @@ DEFINE_LINHA    		EQU COMANDOS + 0AH		; endereço do comando para definir a linh
 DEFINE_COLUNA   		EQU COMANDOS + 0CH		; endereço do comando para definir a coluna
 DEFINE_PIXEL    		EQU COMANDOS + 12H		; endereço do comando para escrever um pixel
 APAGA_AVISO     		EQU COMANDOS + 40H		; endereço do comando para apagar o aviso de nenhum cenário selecionado
-APAGA_ECRÃ	 		EQU COMANDOS + 02H		; endereço do comando para apagar todos os pixels já desenhados
-SELECIONA_CENARIO_FUNDO  EQU COMANDOS + 42H		; endereço do comando para selecionar uma imagem de fundo
+APAGA_ECRÃ	 			EQU COMANDOS + 02H		; endereço do comando para apagar todos os pixels já desenhados
+SELECIONA_CENARIO_FUNDO EQU COMANDOS + 42H		; endereço do comando para selecionar uma imagem de fundo
 TOCA_SOM				EQU COMANDOS + 5AH		; endereço do comando para tocar um som
 
 
@@ -48,9 +46,9 @@ ALTURA_AST			EQU  5		; altura do asteroide
 
 
 
-MIN_COLUNA		EQU  0		; número da coluna mais à esquerda que o objeto pode ocupar
-MAX_COLUNA		EQU  63        ; número da coluna mais à direita que o objeto pode ocupar
-ATRASO			EQU	400H		; atraso para limitar a velocidade de movimento do boneco
+MIN_COLUNA			EQU  0		; número da coluna mais à esquerda que o objeto pode ocupar
+MAX_COLUNA			EQU  63        ; número da coluna mais à direita que o objeto pode ocupar
+ATRASO				EQU	400H		; atraso para limitar a velocidade de movimento do boneco
 
 
 PRETO				EQU 0F000H
@@ -113,6 +111,8 @@ MOV  SP, SP_inicial		; inicializa SP para a palavra a seguir
     MOV  R5, MASCARA   	; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
 	MOV  R1, 1   		; para guardar a linha que está a ser testada
 	MOV  R7, ZERO		; iniciar o R7 a zero
+	MOV  R8, LINHA_AST	; registo com a linha do pixel de referencia asteroide
+	MOV  R9, COLUNA_AST ; registo com a coluna do pixel de referencia asteroide
 	MOV  R10, LINHA_TIRO; registo com a linha do tiro
 	MOV  R11, ZERO		; registo com o valor do display
 
@@ -178,12 +178,17 @@ verifica_tecla:
 	JZ aumenta_display	; incrementa o valor do display
 	
 	MOV R0, 5			; guarda o valor 5 em R0
-	CMP R6, R0			; testa se a tecla premida é a 5
+	CMP R6, R0			; testa se a tecla premida é a 5				;(CRIAR CONSTANTES PARA AS TECLAS **************************************************************)
 	JZ diminui_display	; decrementa o valor do display
 	
 	MOV R0, 6			; guarda o valor 6 em R0
 	CMP R6, R0			; testa se a tecla premida é a 6
-	CALL move_tiro		; desloca o tiro uma linha para cima
+	JZ move_tiro		; desloca o tiro uma linha para cima
+	
+	MOV R0, 7
+	CMP R6, R0
+	JZ move_ast
+	
 	RET
 	
 aumenta_display:
@@ -214,7 +219,7 @@ desenha_nave:
 	MOV R4, DEF_NAVE
 	MOV R5, LARGURA_NAVE
 	MOV R6, ALTURA_NAVE
-	JMP linha_seguinte		; comeca a desenhar a nave
+	JMP linha_seguinte		; comeca a desenhar a nave (TROCAR O NOME)
 	
 ciclo_nave:					; altera os valores para desenhar a próxima linha da nave
 	MOV R2, COLUNA_NAVE
@@ -230,7 +235,7 @@ ciclo_nave:					; altera os valores para desenhar a próxima linha da nave
 	POP R1
 	RET						; volta quando terminou de desenhar a nave
 
-linha_seguinte:
+linha_seguinte:					; (TROCAR O NOME)
 	CALL desenha_pixels
 	JMP ciclo_nave
 	
@@ -274,26 +279,66 @@ apaga_tiro:
 ;*****************************************************************
 ; ****************** ASTEROIDE ***********************************
 ;*****************************************************************
-desenha_ast:
+valores_ast:
+	MOV R1, R8					; copia a linha do pixel de referencia do asteroide
+	MOV R2, R9					; copia a coluna do pixel de referencia do asteroide
+	MOV R4, DEF_AST
+	MOV R5, LARGURA_AST
+	MOV R6, ALTURA_AST
+	RET
+	
+desenha_ast:				; (TROCAR O NOME)
 	PUSH R1
 	PUSH R2
 	PUSH R3
 	PUSH R4
 	PUSH R5
 	PUSH R6
-	MOV R1, LINHA_AST
-	MOV R2, COLUNA_AST
-	MOV R4, DEF_AST
-	MOV R5, LARGURA_AST
-	MOV R6, ALTURA_AST
-	JMP linha_seguinte2			;começa a desenhar o asteroide
+	PUSH R9
+	CALL valores_ast
 	
-ciclo_ast:						; altera os valores para desenhar a proxima linha do asteroide
-	MOV R2, COLUNA_AST
+ciclo_desenha_ast:						; altera os valores para desenhar a proxima linha do asteroide
+	CALL desenha_pixels
+	MOV R2, R9
 	MOV R5, LARGURA_AST
 	ADD R1, 1
 	SUB R6, 1
-	JNZ linha_seguinte2	
+	JNZ ciclo_desenha_ast
+	POP R9
+	POP R6						; repoe todos os valores nos seus registos
+	POP R5
+	POP R4
+	POP R3
+	POP R2
+	POP R1
+	RET							; volta quando terminou de desenhar o asteroide
+
+move_ast:
+	CALL apaga_ast
+	ADD R8, 1
+	ADD R9, 1
+	CALL desenha_ast
+	RET
+	
+	
+apaga_ast:
+	PUSH R1
+	PUSH R2
+	PUSH R3
+	PUSH R4
+	PUSH R5
+	PUSH R6
+	PUSH R9
+	CALL valores_ast
+	
+ciclo_apaga_ast:
+	CALL apaga_pixels
+	MOV R2, R9
+	MOV R5, LARGURA_AST
+	ADD R1, 1
+	SUB R6, 1
+	JNZ ciclo_apaga_ast
+	POP R9
 	POP R6						; repoe todos os valores nos seus registos
 	POP R5
 	POP R4
@@ -302,9 +347,12 @@ ciclo_ast:						; altera os valores para desenhar a proxima linha do asteroide
 	POP R1
 	RET							; volta quando terminou de desenhar o asteroide
 	
-linha_seguinte2:
-	CALL desenha_pixels
-	JMP ciclo_ast
+	
+	
+	
+
+
+
 
 
 ; **********************************************************************
@@ -328,6 +376,16 @@ desenha_pixels:       		; desenha os pixels do boneco a partir da tabela
      SUB  R5, 1			; menos uma coluna para tratar
      JNZ  desenha_pixels      ; continua até percorrer toda a largura do objeto
 	RET
+	
+apaga_pixels:       		; desenha os pixels do boneco a partir da tabela
+	MOV	R3, 0			; cor para apagar o próximo pixel do boneco
+	CALL	escreve_pixel		; escreve cada pixel do boneco
+     ADD  R2, 1               ; próxima coluna
+     SUB  R5, 1			; menos uma coluna para tratar
+     JNZ  apaga_pixels      ; continua até percorrer toda a largura do objeto
+	RET
+
+
 
 
 
