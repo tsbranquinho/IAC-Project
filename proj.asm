@@ -128,7 +128,7 @@ MOV  SP, SP_inicial					  ; inicializa SP para a palavra a seguir
 	MOV	R1, 0						  ; cenário de fundo número 0
      MOV  [SELECIONA_CENARIO_FUNDO], R1	; seleciona o cenário de fundo
 	MOV	R7, 1						  ; valor a somar à coluna do boneco, para o movimentar
-
+      
 	CALL desenha_nave
 	CALL desenha_tiro
 	CALL desenha_ast
@@ -152,9 +152,9 @@ espera_tecla:          				  ; neste ciclo espera-se até uma tecla ser premida
 	MOV R6, R7		   				  ; copia o novo valor da linha para o R6
 	MOV R1, R0		   				  ; copia a coluna para o R1
 	CALL converte_valor				  ; reseta o contador (R7)
-	MOV R0, R7						    ; copia o novo valor da coluna para o R0
-	CALL conv_hexa					    ; converte a tecla premida para um valor hexadecimal
-	CALL verifica_tecla 			    ; verifica se a tecla premida corresponde a um comando
+	MOV R0, R7						  ; copia o novo valor da coluna para o R0
+	CALL conv_hexa					  ; converte a tecla premida para um valor hexadecimal
+	CALL verifica_tecla 			  ; verifica se a tecla premida corresponde a um comando
   
 	  
 ha_tecla:              			  	  ; neste ciclo espera-se até NENHUMA tecla estar premida
