@@ -52,9 +52,16 @@ MIN_COLUNA		EQU  0		; número da coluna mais à esquerda que o objeto pode ocupa
 MAX_COLUNA		EQU  63        ; número da coluna mais à direita que o objeto pode ocupar
 ATRASO			EQU	400H		; atraso para limitar a velocidade de movimento do boneco
 
-COR_PIXEL			EQU	0B566H	; cor do pixel: vermelho em ARGB (opaco e vermelho no máximo, verde e azul a 0)
-COR_2				EQU 02200H	;
-COR_TIRO			EQU 0FF00H
+
+PRETO				EQU 0F000H
+CINZENTO_1			EQU 0E000H
+CINZENTO_2			EQU 0D000H
+CINZENTO_3			EQU 0B000H
+CINZENTO_4			EQU 0A000H
+CINZENTO_5			EQU 09000H
+COR_PIXEL			EQU	0B566H	; cinzento escuro
+COR_2				EQU 02200H	; cinzento claro
+COR_TIRO			EQU 0FF00H	; cor do pixel: vermelho em ARGB (opaco e vermelho no máximo, verde e azul a 0)
 
 
 ; **********************************************************************
@@ -79,11 +86,11 @@ DEF_NAVE:					; tabela que define o boneco (cor, largura, pixels)
 	WORD		COR_2, COR_2, COR_2, COR_2, COR_2, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_2, COR_2, COR_2, COR_2, COR_2
 	
 DEF_AST:
-	WORD 		COR_2, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_2
-	WORD 		COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL
-	WORD 		COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL
-	WORD 		COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_PIXEL
-	WORD 		COR_2, COR_PIXEL, COR_PIXEL, COR_PIXEL, COR_2
+	WORD 		COR_2, CINZENTO_5, CINZENTO_4, CINZENTO_3, COR_2
+	WORD 		CINZENTO_5, CINZENTO_4, CINZENTO_3, CINZENTO_2	, CINZENTO_1
+	WORD 		CINZENTO_4, CINZENTO_3, CINZENTO_2 , CINZENTO_1 , PRETO         ;aaadd wf3g 4egrge
+	WORD 		CINZENTO_3, CINZENTO_2 , CINZENTO_1 , PRETO, PRETO
+	WORD 		COR_2, CINZENTO_1 , PRETO, PRETO, COR_2
 	
 DEF_TIRO:
 	WORD 		LINHA_TIRO, COLUNA_TIRO
