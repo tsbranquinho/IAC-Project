@@ -355,8 +355,6 @@ ciclo_apaga_ast:
 
 
 
-
-
 ; **********************************************************************
 ; ESCREVE_PIXEL - Escreve um pixel na linha e coluna indicadas.
 ; Argumentos:   R1 - linha
