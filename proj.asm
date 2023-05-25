@@ -31,24 +31,24 @@ SELECIONA_CENARIO_FUNDO EQU COMANDOS + 42H		; endereço do comando para selecion
 TOCA_SOM				EQU COMANDOS + 5AH		; endereço do comando para tocar um som
 
 
-LINHA_NAVE        	EQU  24        ; linha da nave (primeira linha)
-COLUNA_NAVE			EQU  25       ; coluna da nave (primeira coluna)
-LARGURA_NAVE		EQU	 15		; largura da nave
-ALTURA_NAVE			EQU  8		; altura da nave
+LINHA_NAVE        	EQU 24        ; linha da nave (primeira linha)
+COLUNA_NAVE			EQU 25       ; coluna da nave (primeira coluna)
+LARGURA_NAVE		EQU	15		; largura da nave
+ALTURA_NAVE			EQU 8		; altura da nave
 
-LINHA_TIRO       	EQU  23        ; linha da sonda (primeira linha)
-COLUNA_TIRO			EQU  32       ; coluna da sonda (primeira coluna)
+LINHA_TIRO       	EQU 23        ; linha da sonda (primeira linha)
+COLUNA_TIRO			EQU 32       ; coluna da sonda (primeira coluna)
 
-LINHA_AST        	EQU  0        ; linha do asteroide (primeira linha)
-COLUNA_AST			EQU  0        ; coluna do asteroide (primeira coluna)
+LINHA_AST        	EQU 0       ; linha do asteroide (primeira linha)
+COLUNA_AST			EQU 0       ; coluna do asteroide (primeira coluna)
 LARGURA_AST			EQU	5		; largura do asteroide
-ALTURA_AST			EQU  5		; altura do asteroide
+ALTURA_AST			EQU 5		; altura do asteroide
 
 
 
 MIN_COLUNA			EQU  0		; número da coluna mais à esquerda que o objeto pode ocupar
-MAX_COLUNA			EQU  63        ; número da coluna mais à direita que o objeto pode ocupar
-ATRASO				EQU	400H		; atraso para limitar a velocidade de movimento do boneco
+MAX_COLUNA			EQU  63     ; número da coluna mais à direita que o objeto pode ocupar
+ATRASO				EQU	400H	; atraso para limitar a velocidade de movimento do boneco
 
 
 PRETO				EQU 0F000H
@@ -318,6 +318,8 @@ move_ast:
 	ADD R8, 1
 	ADD R9, 1
 	CALL desenha_ast
+	MOV    R7, 0            ; som com número 0
+    MOV [TOCA_SOM], R7        ; comando para tocar o som
 	RET
 	
 	
