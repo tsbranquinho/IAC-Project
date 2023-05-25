@@ -57,9 +57,9 @@ CINZENTO_2			EQU 0D000H
 CINZENTO_3			EQU 0B000H
 CINZENTO_4			EQU 0A000H
 CINZENTO_5			EQU 09000H
-COR_PIXEL			EQU	0B566H					; cinzento escuro
-COR_2				EQU 02200H					; cinzento claro
-COR_TIRO			EQU 0FF00H					; cor do pixel: vermelho em ARGB (opaco e vermelho no máximo, VERDE_ESCURO e AZUL_ESCURO a 0)
+CINZENTO_ESCURO		EQU	0B566H
+CINZENTO_CLARO	    EQU 02200H					
+COR_TIRO			EQU 0FF00H					
 BRANCO              EQU 0FFFFH
 AZUL_ESCURO         EQU 0F00AH
 AZUL_CLARO			EQU 0A07FH
@@ -90,11 +90,11 @@ DEF_NAVE:							  ; tabela que define o boneco (cor, largura, pixels)
 	WORD		0, 0, 0, 0, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, 0, 0, 0, 0
 	
 DEF_AST:
-	WORD 		COR_2, CINZENTO_5, CINZENTO_4, CINZENTO_3, COR_2
+	WORD 		CINZENTO_CLARO, CINZENTO_5, CINZENTO_4, CINZENTO_3, CINZENTO_CLARO
 	WORD 		CINZENTO_5, CINZENTO_4, CINZENTO_3, CINZENTO_2	, CINZENTO_1
 	WORD 		CINZENTO_4, CINZENTO_3, CINZENTO_2 , CINZENTO_1 , PRETO         
 	WORD 		CINZENTO_3, CINZENTO_2 , CINZENTO_1 , PRETO, PRETO
-	WORD 		COR_2, CINZENTO_1 , PRETO, PRETO, COR_2
+	WORD 		CINZENTO_CLARO, CINZENTO_1 , PRETO, PRETO, CINZENTO_CLARO
 	
 DEF_TIRO:
 	WORD 		LINHA_TIRO, COLUNA_TIRO
@@ -191,9 +191,9 @@ verifica_tecla:
 	CMP R6, R0					  	  ; testa se a tecla premida é a 6
 	JZ move_tiro				  	  ; desloca o tiro uma linha para cima
   
-	MOV R0, 7  
-	CMP R6, R0  
-	JZ move_ast  
+	MOV R0, 7  						  ; guarda o valor 7 em R0
+	CMP R6, R0  					  ; testa se a tecla premida é a 7
+	JZ move_ast  					  ; desloca o asteroide de cima para baixo e da esquerda para a direita
 	  
 	RET  
 	
@@ -225,7 +225,7 @@ desenha_nave:
 	MOV R4, DEF_NAVE
 	MOV R5, LARGURA_NAVE
 	MOV R6, ALTURA_NAVE
-	JMP linha_seguinte				  ; comeca a desenhar a nave (TROCAR O NOME)
+	JMP linha_seguinte				  ; comeca a desenhar a nave
 	
 ciclo_nave:							  ; altera os valores para desenhar a próxima linha da nave
 	MOV R2, COLUNA_NAVE
@@ -241,7 +241,7 @@ ciclo_nave:							  ; altera os valores para desenhar a próxima linha da nave
 	POP R1
 	RET								  ; volta quando terminou de desenhar a nave
 
-linha_seguinte:						  ; (TROCAR O NOME)
+linha_seguinte:						  ; passa para a proxima linha
 	CALL desenha_pixels
 	JMP ciclo_nave
 	
@@ -254,15 +254,15 @@ desenha_tiro:
 	PUSH R2
 	PUSH R3
 	MOV R1, R10						  ; R10 tem o valor da linha do tiro guardado
-	MOV R2, COLUNA_TIRO
-	MOV R3, COR_TIRO
+	MOV R2, COLUNA_TIRO     		  ; guardar em R2 o valor associado a coluna onde esta o tiro
+	MOV R3, COR_TIRO				  ; guardar em R3 o valor associado a cor da sonda
 	CALL escreve_pixel
 	POP R3
 	POP R2
 	POP R1
 	RET
 
-move_tiro:
+move_tiro:							  ; faz com o que o tiro suba no ecra
 	CALL apaga_tiro
 	SUB R10, 1
 	CALL desenha_tiro
@@ -274,8 +274,8 @@ apaga_tiro:
 	PUSH R2
 	PUSH R3
 	MOV R1, R10						  ; R10 tem o valor da linha do tiro guardado
-	MOV R2, COLUNA_TIRO
-	MOV R3, 0
+	MOV R2, COLUNA_TIRO				  ; guardar em R2 o valor associado a coluna onde esta o tiro
+	MOV R3, 0						  ; guarda o valor 0 em R3
 	CALL escreve_pixel
 	POP R3
 	POP R2
@@ -288,9 +288,9 @@ apaga_tiro:
 valores_ast:
 	MOV R1, R8						  ; copia a linha do pixel de referencia do asteroide
 	MOV R2, R9						  ; copia a coluna do pixel de referencia do asteroide
-	MOV R4, DEF_AST
-	MOV R5, LARGURA_AST
-	MOV R6, ALTURA_AST
+	MOV R4, DEF_AST					  ; guarda em R4 o design da nave
+	MOV R5, LARGURA_AST				  ; guarda em R5 a largura da nave
+	MOV R6, ALTURA_AST				  ; guarda em R6 a altura da nave
 	RET
 	
 desenha_ast:				
@@ -319,10 +319,10 @@ ciclo_desenha_ast:					  ; altera os valores para desenhar a proxima linha do as
 	POP R1
 	RET								  ; volta quando terminou de desenhar o asteroide
 
-move_ast:
-	CALL apaga_ast
-	ADD R8, 1
-	ADD R9, 1
+move_ast:							  ; rotina resposavel por mover o asteroide
+	CALL apaga_ast			
+	ADD R8, 1						  ; modfica a coluna de referencia para o desenho do asteroide
+	ADD R9, 1						  ; modfica a linha de referencia para o desenho do asteroide
 	CALL desenha_ast
 	MOV    R7, 0            		  ; som com número 0
     MOV [TOCA_SOM], R7       		  ; comando para tocar o som
