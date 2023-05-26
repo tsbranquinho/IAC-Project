@@ -50,10 +50,7 @@ MIN_COLUNA			EQU  0						; número da coluna mais à esquerda que o objeto pode 
 MAX_COLUNA			EQU  63     				; número da coluna mais à direita que o objeto pode ocupar
 ATRASO				EQU	400H					; atraso para limitar a velocidade de movimento do boneco
 
-
-PRETO				EQU 0F000H
-CINZENTO_ESCURO		EQU	0B566H
-CINZENTO_CLARO	    EQU 02200H					
+				
 COR_TIRO			EQU 0FF00H					
 BRANCO              EQU 0FFFFH
 AZUL_ESCURO         EQU 0F00AH
