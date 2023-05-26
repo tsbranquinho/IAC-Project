@@ -212,17 +212,17 @@ desenha_nave:
 	PUSH R4
 	PUSH R5
 	PUSH R6
-	MOV R1, LINHA_NAVE
-	MOV R2, COLUNA_NAVE
-	MOV R4, DEF_NAVE
-	MOV R5, LARGURA_NAVE
-	MOV R6, ALTURA_NAVE
+	MOV R1, LINHA_NAVE				  ; primeira linha da nave
+	MOV R2, COLUNA_NAVE		  		  ; primeira coluna da nave
+	MOV R4, DEF_NAVE				  ; tabela que define a nave
+	MOV R5, LARGURA_NAVE			  ; largura da nave
+	MOV R6, ALTURA_NAVE				  ; altura da nave
 	JMP linha_seguinte				  ; começa a desenhar a nave
 	
 ciclo_nave:							  ; altera os valores para desenhar a próxima linha da nave
-	MOV R2, COLUNA_NAVE
-	MOV R5, LARGURA_NAVE
-	ADD R1, 1
+	MOV R2, COLUNA_NAVE				  ; primeira coluna da nave
+	MOV R5, LARGURA_NAVE			  ; largura da nave
+	ADD R1, 1						  ;	troca a linha em que se está a desenhar 
 	SUB R6, 1
 	JNZ linha_seguinte		
 	POP R6							  ; repõe todos os valores nos seus registos
@@ -299,10 +299,10 @@ desenha_ast:
 	
 ciclo_desenha_ast:					  ; altera os valores para desenhar a próxima linha do asteroide
 	CALL desenha_pixels
-	MOV R2, R9
-	MOV R5, LARGURA_AST
-	ADD R1, 1
-	SUB R6, 1
+	MOV R2, R9					  	  ; copia a coluna do pixel de referência do asteroide
+	MOV R5, LARGURA_AST				  ; largura do asteroide
+	ADD R1, 1						  ;	troca a linha em que se está a desenhar
+	SUB R6, 1					
 	JNZ ciclo_desenha_ast
 	POP R9							  ; repõe todos os valores nos seus registos
 	POP R6							  
@@ -335,9 +335,9 @@ apaga_ast:
 	
 ciclo_apaga_ast:
 	CALL apaga_pixels
-	MOV R2, R9
-	MOV R5, LARGURA_AST
-	ADD R1, 1
+	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
+	MOV R5, LARGURA_AST				  ; largura do asteroide
+	ADD R1, 1						  ;	troca a linha em que se está a desenhar
 	SUB R6, 1
 	JNZ ciclo_apaga_ast
 	POP R9
