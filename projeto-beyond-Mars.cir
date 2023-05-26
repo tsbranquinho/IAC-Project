@@ -1529,7 +1529,7 @@
     "windowScreenWidthPixels" : 1024,
     "windowScreenHeightixels" : 512,
     "defaultPenColor" : 65280,
-    "image paths" : [ "BEYOND MARS START SCREEN.png" ],
+    "image paths" : [ "BEYOND MARS START SCREEN.png", "BEYOND MARS SCREEN.png" ],
     "sounds/videos settings" : [ {
       "filePathName" : "TIRO.mp4",
       "relative sound volume" : 0.2,
