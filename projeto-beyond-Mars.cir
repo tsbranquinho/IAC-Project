@@ -2,7 +2,7 @@
   "comment" : "This is a JSON file describing a digital circuit, which can be loaded into the SEPE (Simulador Especial Para Ensino), a computer architecture simulator.",
   "savedWithSimulatorVersion" : "2.2.0",
   "savedWithSimulatorBuildOn" : "2023-05-01  at  07:54:14",
-  "editorLocked" : true,
+  "editorLocked" : false,
   "startAutomatically" : true,
   "showConnectionColors" : false,
   "zoomScale" : 90,
@@ -11,9 +11,9 @@
   "primary screen height" : 720,
   "window" : {
     "X absolute" : -5,
-    "Y absolute" : -5,
+    "Y absolute" : 0,
     "X relative" : -5,
-    "Y relative" : -5,
+    "Y relative" : 0,
     "width" : 1291,
     "height" : 711,
     "leftRightDividerLocation" : 197,
@@ -1519,6 +1519,12 @@
     "defaultPenColor" : 65280,
     "image paths" : [ "BEYOND MARS SCREEN.png", "BEYOND MARS START SCREEN.png" ],
     "sounds/videos settings" : [ {
+      "filePathName" : "MOVIMENTO_ASTERÓIDE.mp4",
+      "relative sound volume" : 0.88,
+      "relative start time" : 0.0,
+      "relative stop time" : 1.0,
+      "playAsClip" : false
+    }, {
       "filePathName" : "TIRO.mp4",
       "relative sound volume" : 0.2,
       "relative start time" : 0.0,
@@ -1527,12 +1533,6 @@
     }, {
       "filePathName" : "COLISÃO_ASTERÓIDE.mp4",
       "relative sound volume" : 1.0,
-      "relative start time" : 0.0,
-      "relative stop time" : 1.0,
-      "playAsClip" : false
-    }, {
-      "filePathName" : "MOVIMENTO_ASTERÓIDE.mp4",
-      "relative sound volume" : 0.88,
       "relative start time" : 0.0,
       "relative stop time" : 1.0,
       "playAsClip" : false
