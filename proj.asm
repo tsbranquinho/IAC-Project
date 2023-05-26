@@ -12,11 +12,15 @@
 ; **********************************************************************
 ; ********** CONSTANTES ************************************************
 ; **********************************************************************
-DISPLAYS   EQU 0A000H  							; endereço dos displays de 7 segmentos (periférico POUT-1)
-TEC_LIN    EQU 0C000H  							; endereço das linhas do teclado (periférico POUT-2)
-TEC_COL    EQU 0E000H  							; endereço das colunas do teclado (periférico PIN)
-ZERO       EQU 0
-MASCARA    EQU 0FH     							; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
+DISPLAYS     EQU 0A000H  							; endereço dos displays de 7 segmentos (periférico POUT-1)
+TEC_LIN      EQU 0C000H  							; endereço das linhas do teclado (periférico POUT-2)
+TEC_COL      EQU 0E000H  							; endereço das colunas do teclado (periférico PIN)
+ZERO         EQU 0
+TECLA_QUATRO EQU 4
+TECLA_CINCO  EQU 5
+TECLA_SEIS   EQU 6
+TECLA_SETE   EQU 7
+MASCARA      EQU 0FH     							; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
 
 COMANDOS				EQU	6000H				; endereço de base dos comandos do MediaCenter
 
@@ -150,13 +154,13 @@ espera_tecla:          				  ; neste ciclo espera-se até uma tecla ser premida
 ha_tecla:              			  	  ; neste ciclo espera-se até NENHUMA tecla estar premida
     MOVB R0, [R3]      			  	  ; ler do periférico de entrada (colunas)
     AND  R0, R5        			  	  ; elimina bits para além dos bits 0-3
-    CMP  R0, ZERO         			  	  ; há tecla premida?
+    CMP  R0, ZERO         			  ; há tecla premida?
     JNZ  ha_tecla      			  	  ; se ainda houver uma tecla premida, espera até não haver
     JMP  ciclo         			  	  ; repete ciclo
   
 converte_valor:					  	  ; transforma o valor das linhas e colunas para 0,1,2,3
 	MOV R7, ZERO	   			  	  ; reseta o contador a zero
-	
+
 valor_ciclo:		  	  
 	ADD R7, 1					  	  ; soma um ao contador
 	SHR R1, 1           		  	  ; diminui o valor da linha
@@ -170,19 +174,19 @@ conv_hexa:
 	RET		  	  
   
 verifica_tecla:		  	  
-	MOV R0, 4					  	  ; guarda o valor 4 em R0
+	MOV R0, TECLA_QUATRO			  ; guarda o valor 4 em R0
 	CMP R6, R0					  	  ; testa se a tecla premida é a 4
 	JZ aumenta_display			  	  ; incrementa o valor do display
   
-	MOV R0, 5					  	  ; guarda o valor 5 em R0
+	MOV R0, TECLA_CINCO			      ; guarda o valor 5 em R0
 	CMP R6, R0					  	  ; testa se a tecla premida é a 5				
 	JZ diminui_display			  	  ; decrementa o valor do display
   
-	MOV R0, 6					  	  ; guarda o valor 6 em R0
+	MOV R0, TECLA_SEIS				  ; guarda o valor 6 em R0
 	CMP R6, R0					  	  ; testa se a tecla premida é a 6
 	JZ move_tiro				  	  ; desloca o tiro uma linha para cima
   
-	MOV R0, 7  						  ; guarda o valor 7 em R0
+	MOV R0, TECLA_SETE  			  ; guarda o valor 7 em R0
 	CMP R6, R0  					  ; testa se a tecla premida é a 7
 	JZ move_ast  					  ; desloca o asteroide de cima para baixo e da esquerda para a direita
 	  
@@ -214,16 +218,16 @@ desenha_nave:
 	MOV R1, LINHA_NAVE				  ; primeira linha da nave
 	MOV R2, COLUNA_NAVE		  		  ; primeira coluna da nave
 	MOV R4, DEF_NAVE				  ; tabela que define a nave
-	MOV R5, LARGURA_NAVE			  ; largura da nave
-	MOV R6, ALTURA_NAVE				  ; altura da nave
+	MOV R5, LARGURA_NAVE			  ; copia a largura da nave
+	MOV R6, ALTURA_NAVE				  ; copia a altura da nave
 	JMP linha_seguinte				  ; começa a desenhar a nave
 	
 ciclo_nave:							  ; altera os valores para desenhar a próxima linha da nave
 	MOV R2, COLUNA_NAVE				  ; primeira coluna da nave
-	MOV R5, LARGURA_NAVE			  ; largura da nave
+	MOV R5, LARGURA_NAVE			  ; repor a largura da nave
 	ADD R1, 1						  ;	troca a linha em que se está a desenhar 
-	SUB R6, 1
-	JNZ linha_seguinte		
+	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
+	JNZ linha_seguinte				  ; se ainda não desenhou todas as linhas, continua a desenhar
 	POP R6							  ; repõe todos os valores nos seus registos
 	POP R5
 	POP R4
@@ -256,7 +260,7 @@ desenha_tiro:
 
 move_tiro:							  ; faz com o que o tiro suba no ecrã
 	CALL apaga_tiro
-	SUB R10, 1
+	SUB R10, 1     			  		  ; decrementa o valor da linha do tiro
 	CALL desenha_tiro
 	RET
 	
@@ -267,7 +271,7 @@ apaga_tiro:
 	PUSH R3
 	MOV R1, R10						  ; R10 tem o valor da linha do tiro guardado
 	MOV R2, COLUNA_TIRO				  ; guardar em R2 o valor associado a coluna onde está o tiro
-	MOV R3, 0						  ; guarda o valor 0 em R3
+	MOV R3, ZERO					  ; guarda o valor 0 em R3
 	CALL escreve_pixel
 	POP R3
 	POP R2
@@ -299,10 +303,10 @@ desenha_ast:
 ciclo_desenha_ast:					  ; altera os valores para desenhar a próxima linha do asteroide
 	CALL desenha_pixels
 	MOV R2, R9					  	  ; copia a coluna do pixel de referência do asteroide
-	MOV R5, LARGURA_AST				  ; largura do asteroide
+	MOV R5, LARGURA_AST				  ; repõe a largura do asteroide
 	ADD R1, 1						  ;	troca a linha em que se está a desenhar
-	SUB R6, 1					
-	JNZ ciclo_desenha_ast
+	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
+	JNZ ciclo_desenha_ast			  ; repete o ciclo até desenhar todas as linhas do asteroide
 	POP R9							  ; repõe todos os valores nos seus registos
 	POP R6							  
 	POP R5
@@ -337,10 +341,10 @@ ciclo_apaga_ast:
 	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
 	MOV R5, LARGURA_AST				  ; largura do asteroide
 	ADD R1, 1						  ;	troca a linha em que se está a desenhar
-	SUB R6, 1
-	JNZ ciclo_apaga_ast
-	POP R9
-	POP R6							  ; repõe todos os valores nos seus registos
+	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
+	JNZ ciclo_apaga_ast				  ; repete até apagar todo o asteroide
+	POP R9							  ; repõe todos os valores nos seus registos
+	POP R6						
 	POP R5
 	POP R4
 	POP R3
