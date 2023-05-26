@@ -52,11 +52,6 @@ ATRASO				EQU	400H					; atraso para limitar a velocidade de movimento do boneco
 
 
 PRETO				EQU 0F000H
-CINZENTO_1			EQU 0E000H
-CINZENTO_2			EQU 0D000H
-CINZENTO_3			EQU 0B000H
-CINZENTO_4			EQU 0A000H
-CINZENTO_5			EQU 09000H
 CINZENTO_ESCURO		EQU	0B566H
 CINZENTO_CLARO	    EQU 02200H					
 COR_TIRO			EQU 0FF00H					
@@ -90,11 +85,11 @@ DEF_NAVE:							  ; tabela que define o boneco (cor, largura, pixels)
 	WORD		0, 0, 0, 0, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, 0, 0, 0, 0
 	
 DEF_AST:
-	WORD 		CINZENTO_CLARO, CINZENTO_5, CINZENTO_4, CINZENTO_3, CINZENTO_CLARO
-	WORD 		CINZENTO_5, CINZENTO_4, CINZENTO_3, CINZENTO_2	, CINZENTO_1
-	WORD 		CINZENTO_4, CINZENTO_3, CINZENTO_2 , CINZENTO_1 , PRETO         
-	WORD 		CINZENTO_3, CINZENTO_2 , CINZENTO_1 , PRETO, PRETO
-	WORD 		CINZENTO_CLARO, CINZENTO_1 , PRETO, PRETO, CINZENTO_CLARO
+	WORD 		0, VERDE_ESCURO, VERDE_ESCURO, VERDE_ESCURO, 0
+	WORD 		VERDE_ESCURO, VERDE_CLARO, VERDE_CLARO, VERDE_CLARO, VERDE_ESCURO
+	WORD 		VERDE_ESCURO, VERDE_CLARO, VERDE_CLARO, VERDE_CLARO, VERDE_ESCURO         
+	WORD 		VERDE_ESCURO, VERDE_CLARO, VERDE_CLARO, VERDE_CLARO, VERDE_ESCURO
+	WORD 		0, VERDE_ESCURO , VERDE_ESCURO, VERDE_ESCURO, 0
 	
 DEF_TIRO:
 	WORD 		LINHA_TIRO, COLUNA_TIRO
@@ -249,6 +244,7 @@ linha_seguinte:						  ; passa para a proxima linha
 ;*****************************************************************
 ; ****************** TIRO ***************************************
 ;*****************************************************************
+
 desenha_tiro:
 	PUSH R1
 	PUSH R2
@@ -285,6 +281,7 @@ apaga_tiro:
 ;*****************************************************************
 ; ****************** ASTEROIDE ***********************************
 ;*****************************************************************
+
 valores_ast:
 	MOV R1, R8						  ; copia a linha do pixel de referencia do asteroide
 	MOV R2, R9						  ; copia a coluna do pixel de referencia do asteroide
@@ -293,7 +290,7 @@ valores_ast:
 	MOV R6, ALTURA_AST				  ; guarda em R6 a altura da nave
 	RET
 	
-desenha_ast:				
+desenha_ast:
 	PUSH R1
 	PUSH R2
 	PUSH R3
@@ -347,20 +344,17 @@ ciclo_apaga_ast:
 	SUB R6, 1
 	JNZ ciclo_apaga_ast
 	POP R9
-	POP R6							  ; repoe todos os valores nos seus registos
+	POP R6							  ; repõe todos os valores nos seus registos
 	POP R5
 	POP R4
 	POP R3
 	POP R2
 	POP R1
-	RET								  ; volta quando terminou de desenhar o asteroide
+	RET								  ; volta quando terminou de desenhar o asteróide
 	
 	
 	
 	
-
-
-
 ; **********************************************************************
 ; ESCREVE_PIXEL - Escreve um pixel na linha e coluna indicadas.
 ; Argumentos:   R1 - linha
