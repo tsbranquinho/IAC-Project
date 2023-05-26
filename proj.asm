@@ -1,19 +1,17 @@
 ; *********************************************************************
-; * IST-UL
-; * Modulo:    lab3.asm
-; * Descrição: Exemplifica o acesso a um teclado.
-; *            Lê uma linha do teclado, verificando se há alguma tecla
-; *            premida nessa linha.
+; * IST-UL, 2022/2023
+; * Introdução à Arquitetura de Computadores
+; * Projeto do Jogo "Beyond Mars"
 ; *
-; * Nota: Observe a forma como se acede aos periféricos de 8 bits
-; *       através da instrução MOVB
-; *********************************************************************
+; * IST 1106630 - Diogo Almada
+; * IST 1106635 - Tiago Branquinho
+; * IST 1107059 - Pedro Loureiro
+; *
+; * Descrição: Entrega intermédia.
 
 ; **********************************************************************
-; * Constantes
+; ********** CONSTANTES ************************************************
 ; **********************************************************************
-; ATENÇÃO: constantes hexadecimais que comecem por uma letra devem ter 0 antes.
-;          Isto não altera o valor de 16 bits e permite distinguir números de identificadores
 DISPLAYS   EQU 0A000H  							; endereço dos displays de 7 segmentos (periférico POUT-1)
 TEC_LIN    EQU 0C000H  							; endereço das linhas do teclado (periférico POUT-2)
 TEC_COL    EQU 0E000H  							; endereço das colunas do teclado (periférico PIN)
@@ -61,7 +59,7 @@ AMARELO             EQU 0FFF0H
 
 
 ; **********************************************************************
-; * Dados
+; ************** DADOS *************************************************
 ; **********************************************************************
 	PLACE       1000H
 pilha:
@@ -93,7 +91,7 @@ DEF_TIRO:
 	WORD		COR_TIRO
 						
 ; **********************************************************************
-; * Código
+; ************ CÓDIGO **************************************************
 ; **********************************************************************
 	PLACE 0
 inicio:
@@ -152,12 +150,13 @@ espera_tecla:          				  ; neste ciclo espera-se até uma tecla ser premida
 ha_tecla:              			  	  ; neste ciclo espera-se até NENHUMA tecla estar premida
     MOVB R0, [R3]      			  	  ; ler do periférico de entrada (colunas)
     AND  R0, R5        			  	  ; elimina bits para além dos bits 0-3
-    CMP  R0, 0         			  	  ; há tecla premida?
+    CMP  R0, ZERO         			  	  ; há tecla premida?
     JNZ  ha_tecla      			  	  ; se ainda houver uma tecla premida, espera até não haver
     JMP  ciclo         			  	  ; repete ciclo
   
 converte_valor:					  	  ; transforma o valor das linhas e colunas para 0,1,2,3
 	MOV R7, ZERO	   			  	  ; reseta o contador a zero
+	
 valor_ciclo:		  	  
 	ADD R7, 1					  	  ; soma um ao contador
 	SHR R1, 1           		  	  ; diminui o valor da linha
