@@ -1448,11 +1448,7 @@
     "moduleDelay" : 5,
     "positionX" : 652,
     "positionY" : 405,
-    "simGuiVisibleInSimulation" : true,
-    "simGuiXRelative" : 894,
-    "simGuiYRelative" : 43,
-    "simGuiWidth" : 132,
-    "simGuiHeight" : 139,
+    "simGuiVisibleInSimulation" : false,
     "columns" : 4,
     "key numbers radix" : "Hexadecimal",
     "key color" : "Default",
@@ -1515,11 +1511,7 @@
     "moduleDelay" : 5,
     "positionX" : 540,
     "positionY" : 197,
-    "simGuiVisibleInSimulation" : true,
-    "simGuiXRelative" : 545,
-    "simGuiYRelative" : 207,
-    "simGuiWidth" : 683,
-    "simGuiHeight" : 341,
+    "simGuiVisibleInSimulation" : false,
     "columnAddressNBits" : 6,
     "lineAddressNBits" : 5,
     "windowScreenWidthPixels" : 1024,
@@ -1540,12 +1532,6 @@
       "playAsClip" : false
     }, {
       "filePathName" : "COLISÃO_ASTERÓIDE.mp4",
-      "relative sound volume" : 1.0,
-      "relative start time" : 0.0,
-      "relative stop time" : 1.0,
-      "playAsClip" : false
-    }, {
-      "filePathName" : "VIDEO_FUNDO_3.mp4",
       "relative sound volume" : 1.0,
       "relative start time" : 0.0,
       "relative stop time" : 1.0,
