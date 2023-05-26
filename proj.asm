@@ -349,16 +349,9 @@ ciclo_apaga_ast:
 	POP R1
 	RET								  ; volta quando terminou de desenhar o asteróide
 	
-	
-	
-	
-; **********************************************************************
-; ESCREVE_PIXEL - Escreve um pixel na linha e coluna indicadas.
-; Argumentos:   R1 - linha
-;               R2 - coluna
-;               R3 - cor do pixel (em formato ARGB de 16 bits)
-;
-; **********************************************************************
+;*****************************************************************
+; ****************** PIXELS **************************************
+;*****************************************************************
 escreve_pixel:
 	MOV  [DEFINE_LINHA], R1			  ; seleciona a linha
 	MOV  [DEFINE_COLUNA], R2		  ; seleciona a coluna
