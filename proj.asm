@@ -103,11 +103,11 @@ MOV  SP, SP_inicial					  ; inicializa SP para a palavra a seguir
 									  ; à última da pilha
 
 ; inicializações
+	MOV  R1, 1   					  ; para guardar a linha que está a ser testada
     MOV  R2, TEC_LIN   				  ; endereço do periférico das linhas
     MOV  R3, TEC_COL   				  ; endereço do periférico das colunas
     MOV  R4, DISPLAYS  				  ; endereço do periférico dos displays
     MOV  R5, MASCARA   				  ; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
-	MOV  R1, 1   					  ; para guardar a linha que está a ser testada
 	MOV  R7, ZERO					  ; iniciar o R7 a zero
 	MOV  R8, LINHA_AST				  ; registo com a linha do pixel de referencia asteroide
 	MOV  R9, COLUNA_AST 			  ; registo com a coluna do pixel de referencia asteroide
@@ -115,10 +115,10 @@ MOV  SP, SP_inicial					  ; inicializa SP para a palavra a seguir
 	MOV  R11, ZERO					  ; registo com o valor do display
 
                             
-     MOV  [APAGA_AVISO], R1			  ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
-     MOV  [APAGA_ECRÃ], R1			  ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
+    MOV  [APAGA_AVISO], R1			  ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+    MOV  [APAGA_ECRÃ], R1			  ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
 	MOV	R1, 0						  ; cenário de fundo número 0
-     MOV  [SELECIONA_CENARIO_FUNDO], R1	; seleciona o cenário de fundo
+    MOV  [SELECIONA_CENARIO_FUNDO], R1; seleciona o cenário de fundo
 	MOV	R7, 1						  ; valor a somar à coluna do boneco, para o movimentar
       
 	CALL desenha_nave
@@ -166,7 +166,7 @@ valor_ciclo:
 	RET		  	  
   
 conv_hexa:		  	  
-	SHR R6, 2           		  	  ; multiplica o valor da linha por 4
+	SHR R6, 2           		  	  ; divide o valor da linha por 4
 	ADD R6, R0          		  	  ; adiciona o valor da coluna e guarda no R6
 	RET		  	  
   
@@ -217,7 +217,7 @@ desenha_nave:
 	MOV R4, DEF_NAVE
 	MOV R5, LARGURA_NAVE
 	MOV R6, ALTURA_NAVE
-	JMP linha_seguinte				  ; comeca a desenhar a nave
+	JMP linha_seguinte				  ; começa a desenhar a nave
 	
 ciclo_nave:							  ; altera os valores para desenhar a próxima linha da nave
 	MOV R2, COLUNA_NAVE
@@ -225,7 +225,7 @@ ciclo_nave:							  ; altera os valores para desenhar a próxima linha da nave
 	ADD R1, 1
 	SUB R6, 1
 	JNZ linha_seguinte		
-	POP R6							  ; repoe todos os valores nos seus registos
+	POP R6							  ; repõe todos os valores nos seus registos
 	POP R5
 	POP R4
 	POP R3
@@ -233,7 +233,7 @@ ciclo_nave:							  ; altera os valores para desenhar a próxima linha da nave
 	POP R1
 	RET								  ; volta quando terminou de desenhar a nave
 
-linha_seguinte:						  ; passa para a proxima linha
+linha_seguinte:						  ; passa para a próxima linha
 	CALL desenha_pixels
 	JMP ciclo_nave
 	
@@ -247,7 +247,7 @@ desenha_tiro:
 	PUSH R2
 	PUSH R3
 	MOV R1, R10						  ; R10 tem o valor da linha do tiro guardado
-	MOV R2, COLUNA_TIRO     		  ; guardar em R2 o valor associado a coluna onde esta o tiro
+	MOV R2, COLUNA_TIRO     		  ; guardar em R2 o valor associado a coluna onde está o tiro
 	MOV R3, COR_TIRO				  ; guardar em R3 o valor associado a cor da sonda
 	CALL escreve_pixel
 	POP R3
@@ -255,7 +255,7 @@ desenha_tiro:
 	POP R1
 	RET
 
-move_tiro:							  ; faz com o que o tiro suba no ecra
+move_tiro:							  ; faz com o que o tiro suba no ecrã
 	CALL apaga_tiro
 	SUB R10, 1
 	CALL desenha_tiro
@@ -267,7 +267,7 @@ apaga_tiro:
 	PUSH R2
 	PUSH R3
 	MOV R1, R10						  ; R10 tem o valor da linha do tiro guardado
-	MOV R2, COLUNA_TIRO				  ; guardar em R2 o valor associado a coluna onde esta o tiro
+	MOV R2, COLUNA_TIRO				  ; guardar em R2 o valor associado a coluna onde está o tiro
 	MOV R3, 0						  ; guarda o valor 0 em R3
 	CALL escreve_pixel
 	POP R3
@@ -280,8 +280,8 @@ apaga_tiro:
 ;*****************************************************************
 
 valores_ast:
-	MOV R1, R8						  ; copia a linha do pixel de referencia do asteroide
-	MOV R2, R9						  ; copia a coluna do pixel de referencia do asteroide
+	MOV R1, R8						  ; copia a linha do pixel de referência do asteroide
+	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
 	MOV R4, DEF_AST					  ; guarda em R4 o design da nave
 	MOV R5, LARGURA_AST				  ; guarda em R5 a largura da nave
 	MOV R6, ALTURA_AST				  ; guarda em R6 a altura da nave
@@ -297,15 +297,15 @@ desenha_ast:
 	PUSH R9
 	CALL valores_ast
 	
-ciclo_desenha_ast:					  ; altera os valores para desenhar a proxima linha do asteroide
+ciclo_desenha_ast:					  ; altera os valores para desenhar a próxima linha do asteroide
 	CALL desenha_pixels
 	MOV R2, R9
 	MOV R5, LARGURA_AST
 	ADD R1, 1
 	SUB R6, 1
 	JNZ ciclo_desenha_ast
-	POP R9
-	POP R6							  ; repoe todos os valores nos seus registos
+	POP R9							  ; repõe todos os valores nos seus registos
+	POP R6							  
 	POP R5
 	POP R4
 	POP R3
@@ -313,10 +313,10 @@ ciclo_desenha_ast:					  ; altera os valores para desenhar a proxima linha do as
 	POP R1
 	RET								  ; volta quando terminou de desenhar o asteroide
 
-move_ast:							  ; rotina resposavel por mover o asteroide
+move_ast:							  ; rotina responsável por mover o asteroide
 	CALL apaga_ast			
-	ADD R8, 1						  ; modfica a coluna de referencia para o desenho do asteroide
-	ADD R9, 1						  ; modfica a linha de referencia para o desenho do asteroide
+	ADD R8, 1						  ; modifica a coluna de referencia para o desenho do asteroide
+	ADD R9, 1						  ; modifica a linha de referencia para o desenho do asteroide
 	CALL desenha_ast
 	MOV    R7, 0            		  ; som com número 0
     MOV [TOCA_SOM], R7       		  ; comando para tocar o som
@@ -369,16 +369,16 @@ desenha_pixels:       				  ; desenha os pixels do boneco a partir da tabela
 	MOV	R3, [R4]					  ; obtém a cor do próximo pixel do boneco
 	CALL	escreve_pixel			  ; escreve cada pixel do boneco
 	ADD	R4, 2						  ; endereço da cor do próximo pixel (2 porque cada cor de pixel é uma word)
-     ADD  R2, 1               		  ; próxima coluna
-     SUB  R5, 1						  ; menos uma coluna para tratar
-     JNZ  desenha_pixels      		  ; continua até percorrer toda a largura do objeto
+    ADD  R2, 1               		  ; próxima coluna
+    SUB  R5, 1						  ; menos uma coluna para tratar
+    JNZ  desenha_pixels      		  ; continua até percorrer toda a largura do objeto
 	RET
 	
 apaga_pixels:       				  ; desenha os pixels do boneco a partir da tabela
 	MOV	R3, 0						  ; cor para apagar o próximo pixel do boneco
 	CALL	escreve_pixel			  ; escreve cada pixel do boneco
-     ADD  R2, 1               		  ; próxima coluna
-     SUB  R5, 1						  ; menos uma coluna para tratar
-     JNZ  apaga_pixels      		  ; continua até percorrer toda a largura do objeto
+    ADD  R2, 1               		  ; próxima coluna
+    SUB  R5, 1						  ; menos uma coluna para tratar
+    JNZ  apaga_pixels      		  	  ; continua até percorrer toda a largura do objeto
 	RET
 
