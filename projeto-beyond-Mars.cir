@@ -739,7 +739,11 @@
     "moduleDelay" : 5,
     "positionX" : 172,
     "positionY" : 75,
-    "simGuiVisibleInSimulation" : false,
+    "simGuiVisibleInSimulation" : true,
+    "simGuiXRelative" : 0,
+    "simGuiYRelative" : 0,
+    "simGuiWidth" : 637,
+    "simGuiHeight" : 713,
     "clockPeriod" : 200,
     "startAutomatically" : true,
     "simulationMaster" : true,
@@ -1519,8 +1523,8 @@
     "defaultPenColor" : 65280,
     "image paths" : [ "BEYOND MARS SCREEN.png", "BEYOND MARS START SCREEN.png" ],
     "sounds/videos settings" : [ {
-      "filePathName" : "MOVIMENTO_ASTERÓIDE.mp4",
-      "relative sound volume" : 0.88,
+      "filePathName" : "MOVIMENTO_ASTEROIDE.wav",
+      "relative sound volume" : 0.79,
       "relative start time" : 0.0,
       "relative stop time" : 1.0,
       "playAsClip" : false
