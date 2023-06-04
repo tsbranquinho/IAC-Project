@@ -30,7 +30,9 @@ DEFINE_PIXEL    		EQU COMANDOS + 12H		; endereço do comando para escrever um pi
 APAGA_AVISO     		EQU COMANDOS + 40H		; endereço do comando para apagar o aviso de nenhum cenário selecionado
 APAGA_ECRÃ	 			EQU COMANDOS + 02H		; endereço do comando para apagar todos os pixels já desenhados
 SELECIONA_CENARIO_FUNDO EQU COMANDOS + 42H		; endereço do comando para selecionar uma imagem de fundo
-TOCA_SOM				EQU COMANDOS + 5AH		; endereço do comando para tocar um som
+SELECIONA_VIDEO_FUNDO   EQU COMANDOS + 48H		; endereço do comando para selecionar um vídeo de fundo
+SELECIONA_ESTADO_VID	EQU COMANDOS + 52H		; endereço do comando para selecionar o estado do vídeo
+REPRODUZ		    	EQU COMANDOS + 5AH		; endereço do comando para tocar um som
 
 
 LINHA_NAVE        	EQU 24       				; linha da nave (primeira linha)
@@ -114,14 +116,14 @@ MOV  SP, SP_inicial					  ; inicializa SP para a palavra a seguir
 	MOV  R8, LINHA_AST				  ; registo com a linha do pixel de referencia asteroide
 	MOV  R9, COLUNA_AST 			  ; registo com a coluna do pixel de referencia asteroide
 	MOV  R10, LINHA_TIRO			  ; registo com a linha do tiro
-	MOV  R11, ZERO					  ; registo com o valor do display
+	MOV  R11, 100					  ; registo com o valor do display
 
                             
     MOV  [APAGA_AVISO], R1			  ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
     MOV  [APAGA_ECRÃ], R1			  ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
-	MOV	R1, 0						  ; cenário de fundo número 0
-    MOV  [SELECIONA_CENARIO_FUNDO], R1; seleciona o cenário de fundo
-	MOV	R7, 1						  ; valor a somar à coluna do boneco, para o movimentar
+	MOV  R1, 0                        ; vídeo número 0
+	MOV  [REPRODUZ], R1				  ; reproduz o vídeo número 0
+	MOV	 R7, 1						  ; valor a somar à coluna do boneco, para o movimentar
       
 	CALL desenha_nave
 	CALL desenha_tiro
@@ -130,7 +132,8 @@ MOV  SP, SP_inicial					  ; inicializa SP para a palavra a seguir
 ; corpo principal do programa
 ciclo:
 	MOV R1, 1
-    MOV [R4], R11      				  ; escreve linha e coluna a zero nos displays
+	CALL mostra_display
+    ;MOV [R4], R11      				  ; escreve linha e coluna a zero nos displays
 			  
 espera_tecla:          				  ; neste ciclo espera-se até uma tecla ser premida
     ROL R1, 1				  
@@ -192,18 +195,51 @@ verifica_tecla:
 	  
 	RET  
 	
+mostra_display: 
+	PUSH R1
+	PUSH R2
+	PUSH R3
+	PUSH R5
+	PUSH R6
+	PUSH R7
+	MOV R1, 0
+	MOV R7, R11
+	MOV R2, 1000
+	MOV R5, 10
+	JMP converte_decimal	
+
 aumenta_display:
-	 ADD R11, 1						  ; incrementa o valor do display
-	 MOV [R4], R11					  ; escreve no periférico do display
-	 RET			  
+	ADD R11, 1	
+	RET  
 	 			  
 diminui_display:			  
-	 SUB R11, 1						  ; decrementa o valor do display
-	 MOV [R4], R11					  ; escreve no periférico do display
-	 RET
+	SUB R11, 1						  ; decrementa o valor do display
+	;MOV [R4], R11					  ; escreve no periférico do display
+	RET
 
+converte_decimal:
+	MOD R7, R2 						  ;passo 1
+	DIV R2, R5 						  ;passo 2
+	MOV R6, R2
+	;SUB R6, 5
+	;SUB R6, 5
+	CMP R6, 1
+	JLT escreve_display 			  ;passo 3
+	MOV R3, R7
+	DIV R3, R2 						  ;passo 4
+	SHL R1, 4 						  ;passo 5
+	OR R1, R3 						  ;passo 6
+	JMP converte_decimal
 
-
+escreve_display:
+	MOV [R4], R1					  ; escreve no periférico do display
+	POP R7
+	POP R6
+	POP R5
+	POP R3
+	POP R2
+	POP R1
+	RET	
 
 ;*****************************************************************
 ; ****************** NAVE ***************************************
@@ -321,8 +357,8 @@ move_ast:							  ; rotina responsável por mover o asteroide
 	ADD R8, 1						  ; modifica a coluna de referencia para o desenho do asteroide
 	ADD R9, 1						  ; modifica a linha de referencia para o desenho do asteroide
 	CALL desenha_ast
-	MOV    R7, 0            		  ; som com número 0
-    MOV [TOCA_SOM], R7       		  ; comando para tocar o som
+	MOV    R7, 1            		  ; som com número 0
+    MOV [REPRODUZ], R7       		  ; comando para tocar o som
 	RET
 	
 	
