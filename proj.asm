@@ -132,10 +132,10 @@ MOV  SP, SP_inicial					  ; inicializa SP para a palavra a seguir
 ; corpo principal do programa
 ciclo:
 	MOV R1, 1
-	CALL mostra_display
     ;MOV [R4], R11      				  ; escreve linha e coluna a zero nos displays
 			  
 espera_tecla:          				  ; neste ciclo espera-se até uma tecla ser premida
+	CALL mostra_display
     ROL R1, 1				  
     MOVB [R2], R1      				  ; escrever no periférico de saída (linhas)
     MOVB R0, [R3]      				  ; ler do periférico de entrada (colunas)
