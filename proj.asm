@@ -20,6 +20,7 @@ TECLA_QUATRO EQU 4
 TECLA_CINCO  EQU 5
 TECLA_SEIS   EQU 6
 TECLA_SETE   EQU 7
+TECLA_C    	 EQU 0CH
 MASCARA      EQU 0FH     							; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
 
 COMANDOS				EQU	6000H				; endereço de base dos comandos do MediaCenter
@@ -103,10 +104,11 @@ DEF_TIRO:
 inicio:
 
 
-MOV  SP, SP_inicial					  ; inicializa SP para a palavra a seguir
+	MOV  SP, SP_inicial				  ; inicializa SP para a palavra a seguir
 									  ; à última da pilha
 
 ; inicializações
+
 	MOV  R1, 1   					  ; para guardar a linha que está a ser testada
     MOV  R2, TEC_LIN   				  ; endereço do periférico das linhas
     MOV  R3, TEC_COL   				  ; endereço do periférico das colunas
@@ -116,26 +118,47 @@ MOV  SP, SP_inicial					  ; inicializa SP para a palavra a seguir
 	MOV  R8, LINHA_AST				  ; registo com a linha do pixel de referencia asteroide
 	MOV  R9, COLUNA_AST 			  ; registo com a coluna do pixel de referencia asteroide
 	MOV  R10, LINHA_TIRO			  ; registo com a linha do tiro
-	MOV  R11, 100					  ; registo com o valor do display
-
                             
-    MOV  [APAGA_AVISO], R1			  ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+    ;MOV  [APAGA_AVISO], R1			  ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+    ;MOV  [APAGA_ECRÃ], R1			  ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
+	;MOV  R1, 0                        ; vídeo número 0
+	;MOV  [REPRODUZ], R1				  ; reproduz o vídeo número 0
+	;MOV	 R7, 1						  ; valor a somar à coluna do boneco, para o movimentar
+      
+	;CALL desenha_nave
+	;CALL desenha_tiro
+	;CALL desenha_ast
+
+; corpo principal do programa
+
+cenario_inicial: 
+	MOV  [APAGA_AVISO], R1			  ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+    MOV  [APAGA_ECRÃ], R1			  ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
+	MOV  R1, 0                        ; cenário de fundo número 0
+	MOV  [SELECIONA_CENARIO_FUNDO], R1; reproduz o vídeo número 0
+	MOV  R11, 0						  ; registo com o valor inicial do display (depois estou a pensar mudar para -100)
+	MOV  R1, 1
+	JMP espera_tecla			      ; espera que uma tecla seja premida
+
+setup:
+
+	MOV  [APAGA_AVISO], R1			  ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
     MOV  [APAGA_ECRÃ], R1			  ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
 	MOV  R1, 0                        ; vídeo número 0
 	MOV  [REPRODUZ], R1				  ; reproduz o vídeo número 0
 	MOV	 R7, 1						  ; valor a somar à coluna do boneco, para o movimentar
+	MOV  R11, 100					  ; valor do display inicial do jogo
       
 	CALL desenha_nave
 	CALL desenha_tiro
 	CALL desenha_ast
 
-; corpo principal do programa
 ciclo:
 	MOV R1, 1
     ;MOV [R4], R11      				  ; escreve linha e coluna a zero nos displays
 			  
 espera_tecla:          				  ; neste ciclo espera-se até uma tecla ser premida
-	CALL mostra_display
+	CALL mostra_display               ; atualiza valor do display
     ROL R1, 1				  
     MOVB [R2], R1      				  ; escrever no periférico de saída (linhas)
     MOVB R0, [R3]      				  ; ler do periférico de entrada (colunas)
@@ -159,6 +182,8 @@ ha_tecla:              			  	  ; neste ciclo espera-se até NENHUMA tecla estar 
     AND  R0, R5        			  	  ; elimina bits para além dos bits 0-3
     CMP  R0, ZERO         			  ; há tecla premida?
     JNZ  ha_tecla      			  	  ; se ainda houver uma tecla premida, espera até não haver
+	CMP  R11, 0						  ; testa se o valor do display é zero
+	JZ	 cenario_inicial			  ; se for zero, vai para o início do jogo (por enquanto, depois temos que mudar este pensamento todo por causa dos diferentes cenários)
     JMP  ciclo         			  	  ; repete ciclo
   
 converte_valor:					  	  ; transforma o valor das linhas e colunas para 0,1,2,3
@@ -178,20 +203,34 @@ conv_hexa:
   
 verifica_tecla:		  	  
 	MOV R0, TECLA_QUATRO			  ; guarda o valor 4 em R0
+	CMP R11, 0						  ; testa se o valor do display é 0 (cenário inicial)
+	JZ ha_tecla					      ; se for, espera até nenhuma tecla estar premida
 	CMP R6, R0					  	  ; testa se a tecla premida é a 4
 	JZ aumenta_display			  	  ; incrementa o valor do display
   
 	MOV R0, TECLA_CINCO			      ; guarda o valor 5 em R0
+	CMP R11, 0						  ; testa se o valor do display é 0 (cenário inicial)
+	JZ ha_tecla					  	  ; se for, espera até nenhuma tecla estar premida
 	CMP R6, R0					  	  ; testa se a tecla premida é a 5				
 	JZ diminui_display			  	  ; decrementa o valor do display
   
 	MOV R0, TECLA_SEIS				  ; guarda o valor 6 em R0
+	CMP R11, 0						  ; testa se o valor do display é 0 (cenário inicial)
+	JZ ha_tecla					  	  ; se for, espera até nenhuma tecla estar premida
 	CMP R6, R0					  	  ; testa se a tecla premida é a 6
 	JZ move_tiro				  	  ; desloca o tiro uma linha para cima
   
 	MOV R0, TECLA_SETE  			  ; guarda o valor 7 em R0
+	CMP R11, 0						  ; testa se o valor do display é 0 (cenário inicial)
+	JZ ha_tecla					  	  ; se for, espera até nenhuma tecla estar premida
 	CMP R6, R0  					  ; testa se a tecla premida é a 7
 	JZ move_ast  					  ; desloca o asteroide de cima para baixo e da esquerda para a direita
+
+	MOV R0, TECLA_C					  ; guarda o valor 0CH em R0
+	CMP R11, 0       				  ; testa se o valor do display é 0 (cenário inicial)
+	JNZ ha_tecla	 				  ; se não for, espera até nenhuma tecla estar premida
+	CMP R6, R0						  ; testa se a tecla premida é a C
+	JZ  setup						  ; inicia o jogo	
 	  
 	RET  
 	
