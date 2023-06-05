@@ -16,6 +16,7 @@ DISPLAYS     EQU 0A000H  							; endereço dos displays de 7 segmentos (perifé
 TEC_LIN      EQU 0C000H  							; endereço das linhas do teclado (periférico POUT-2)
 TEC_COL      EQU 0E000H  							; endereço das colunas do teclado (periférico PIN)
 ZERO         EQU 0
+TECLA_UM     EQU 1
 TECLA_QUATRO EQU 4
 TECLA_CINCO  EQU 5
 TECLA_SEIS   EQU 6
@@ -43,6 +44,7 @@ ALTURA_NAVE			EQU 6						; altura da nave
 
 LINHA_TIRO       	EQU 25        				; linha da sonda (primeira linha)
 COLUNA_TIRO			EQU 31       				; coluna da sonda (primeira coluna)
+LIMITE_SONDA        EQU 12
 
 LINHA_AST        	EQU 0       				; linha do asteroide (primeira linha)
 COLUNA_AST			EQU 0       				; coluna do asteroide (primeira coluna)
@@ -78,10 +80,13 @@ SP_inicial_principal:
 SP_inicial_teclado:
 
 	STACK 100H						  ; espaço reservado para o processo de movimento do asteróide
-SP_inicial_asteroides:
+SP_inicial_ast:
 
 	STACK 100H                        ; espaço reservado para o processo de energia
 SP_inicial_energia:
+
+	STACK 100H						  ; espaço reservado para o processo de movimento da sonda
+SP_inicial_sonda:
 
 tecla_carregada:
 	LOCK 0							  ; forma do teclado comunicar com os outros processos
@@ -94,13 +99,20 @@ evento_int:
 
 
 tab:
-	WORD 0					  ; rotina de atendimento da interrupção dos asteróides
-	WORD 0				  ; rotina de atendimento da interrupção das sondas
+	WORD rot_ast					  ; rotina de atendimento da interrupção dos asteróides
+	WORD rot_sonda				      ; rotina de atendimento da interrupção das sondas
 	WORD rot_energia				  ; rotina de atendimento da interrupção da energia (display)
 	WORD 0				  ; rotina de atendimento da interrupção da nave
 
 energia_total:
 	WORD 0					  ; energia da nave
+
+estado_jogo:
+    WORD 0                    ; estado do jogo 
+						      ;	0 - ecrã inicial, 
+							  ; 1 - jogo a decorrer,
+							  ; 2 - jogo pausado,
+							  ; 3 - jogo terminado
 
 DEF_NAVE:							  ; tabela que define o boneco (cor, largura, pixels)
 	WORD		0, 0, 0, 0, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, 0, 0, 0, 0
@@ -136,7 +148,6 @@ inicio:
 
 ; inicializações
 
-	MOV  R1, 1   					  ; para guardar a linha que está a ser testada
     MOV  R2, TEC_LIN   				  ; endereço do periférico das linhas
     MOV  R3, TEC_COL   				  ; endereço do periférico das colunas
     MOV  R4, DISPLAYS  				  ; endereço do periférico dos displays
@@ -146,16 +157,8 @@ inicio:
 	MOV  R9, COLUNA_AST 			  ; registo com a coluna do pixel de referencia asteroide
 	MOV  R10, LINHA_TIRO			  ; registo com a linha do tiro
 	MOV  [R4], R7					  ; reseta os displays
+	MOV  [estado_jogo], R7			  ; estado do jogo - ecrã inicial
                             
-    ;MOV  [APAGA_AVISO], R1			  ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
-    ;MOV  [APAGA_ECRÃ], R1			  ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
-	;MOV  R1, 0                        ; vídeo número 0
-	;MOV  [REPRODUZ], R1				  ; reproduz o vídeo número 0
-	;MOV	 R7, 1						  ; valor a somar à coluna do boneco, para o movimentar
-      
-	;CALL desenha_nave
-	;CALL desenha_tiro
-	;CALL desenha_ast
 
 ; corpo principal do programa
 
@@ -165,35 +168,27 @@ cenario_inicial:
 	MOV  R1, 0                        ; cenário de fundo número 0
 	MOV  [SELECIONA_CENARIO_FUNDO], R1; reproduz o vídeo número 0
 	MOV  R11, 0						  ; registo com o valor inicial do display (depois estou a pensar mudar para -100)
-	MOV  R1, 1
+	MOV  R1, 1   					  ; para guardar a linha que está a ser testada
 
-espera_tecla_inicial:
-	ROL R1, 1				  
-    MOVB [R2], R1      				  ; escrever no periférico de saída (linhas)
-    MOVB R0, [R3]      				  ; ler do periférico de entrada (colunas)
-    AND  R0, R5        				  ; elimina bits para além dos bits 0-3
-    CMP  R0, ZERO       			  ; há tecla premida?
-    JZ   espera_tecla_inicial  		  ; se nenhuma tecla premida, repete
-									  ; vai mostrar a linha e a coluna da tecla
-				  
-	CALL converte_valor				  ; converte o valor da linha e guarda no R7
-    SHL R7, 4         				  ; coloca linha no nibble high
-	MOV R6, R7		   				  ; copia o novo valor da linha para o R6
-	MOV R1, R0		   				  ; copia a coluna para o R1
-	CALL converte_valor				  ; reseta o contador (R7)
-	MOV R0, R7						  ; copia o novo valor da coluna para o R0
-	CALL conv_hexa					  ; converte a tecla premida para um valor hexadecimal
-	MOV R0, TECLA_C					  ; guarda o valor 0CH em R0
-	CMP R6, R0						  ; testa se a tecla premida é a C
-	JZ  setup		                  ; se for a tecla C, vai para o setup
+	EI0								  ; ativa interrupção dos asteróides
+	EI1							      ; ativa interrupção das sondas
+	EI2								  ; ativa interrupção da energia (display)
+								      ; ativa interrupção da nave
+	EI								  ; ativa interrupções (geral)
 
-ha_tecla_inicial:              		  ; neste ciclo espera-se até NENHUMA tecla estar premida
-    MOVB R0, [R3]      			  	  ; ler do periférico de entrada (colunas)
-    AND  R0, R5        			  	  ; elimina bits para além dos bits 0-3
-    CMP  R0, ZERO         			  ; há tecla premida?
-    JNZ  ha_tecla_inicial      	      ; se ainda houver uma tecla premida, espera até não haver
-	MOV  R1, 1
-    JMP  espera_tecla_inicial         ; repete ciclo
+	CALL teclado
+	CALL energia
+	CALL asteroide
+	CALL sonda
+
+espera_inicio:
+	MOV R0, [tecla_carregada]
+	MOV R1, TECLA_C
+	CMP R0, R1
+	JNZ espera_inicio
+	MOV R0, [estado_jogo]
+	ADD R0, 1
+	MOV [estado_jogo], R0
 
 setup:
 
@@ -207,16 +202,7 @@ setup:
 	CALL mostra_display				  ; mostra o valor da energia total no display
       
 	CALL desenha_nave
-	CALL desenha_tiro
 	CALL desenha_ast
-
-									  ; ativa interrupção dos asteróides
-								      ; ativa interrupção das sondas
-	EI2								  ; ativa interrupção da energia (display)
-								      ; ativa interrupção da nave
-	EI								  ; ativa interrupções (geral)
-	CALL teclado
-	CALL energia
 
 ciclo:
 	MOV R1, 1
@@ -249,14 +235,6 @@ verifica_tecla:
 	MOV R6, TECLA_CINCO
 	CMP R6, R0					  	  ; testa se a tecla premida é a 5				
 	JZ diminui_display			  	  ; decrementa o valor do display
-  
-	MOV R6, TECLA_SEIS
-	CMP R6, R0					  	  ; testa se a tecla premida é a 6
-	JZ move_tiro				  	  ; desloca o tiro uma linha para cima
-  
-	MOV R6, TECLA_SETE
-	CMP R6, R0  					  ; testa se a tecla premida é a 7
-	JZ move_ast  					  ; desloca o asteroide de cima para baixo e da esquerda para a direita
 	  
 	RET  	
 
@@ -296,16 +274,6 @@ escreve_display:
 	POP R1
 	RET	
 
-PROCESS SP_inicial_energia
-
-energia:
-	MOV R1, [evento_int + 4]
-	MOV R11, [energia_total]
-	SUB R11, 3
-	MOV [energia_total], R11
-	CALL mostra_display                   ; atualiza valor do display
-	JMP energia
-
 ; *****************************************************************
 ; ***************************** NAVE ******************************
 ; *****************************************************************
@@ -341,43 +309,115 @@ linha_seguinte:						  ; passa para a próxima linha
 	CALL desenha_pixels
 	JMP ciclo_nave
 	
-	
-; *****************************************************************
-; **************************** TIRO *******************************
-; *****************************************************************
 
-desenha_tiro:
-	PUSH R1
-	PUSH R2
-	PUSH R3
-	MOV R1, R10						  ; R10 tem o valor da linha do tiro guardado
-	MOV R2, COLUNA_TIRO     		  ; guardar em R2 o valor associado a coluna onde está o tiro
-	MOV R3, COR_TIRO				  ; guardar em R3 o valor associado a cor da sonda
-	CALL escreve_pixel
-	POP R3
-	POP R2
-	POP R1
+PROCESS SP_inicial_teclado            ; indicação do início do processo do teclado
+
+teclado:
+	MOV  R1, 1   					  ; para guardar a linha que está a ser testada
+    MOV  R2, TEC_LIN   				  ; endereço do periférico das linhas
+    MOV  R3, TEC_COL   				  ; endereço do periférico das colunas~
+
+espera_tecla:          			  	  ; neste ciclo espera-se até uma tecla ser premida
+
+	YIELD                             ; ciclo potencialmente bloqueante
+	
+    ROL R1, 1				  
+    MOVB [R2], R1      				  ; escrever no periférico de saída (linhas)
+    MOVB R0, [R3]      				  ; ler do periférico de entrada (colunas)
+    AND  R0, R5        				  ; elimina bits para além dos bits 0-3
+    CMP  R0, ZERO       			  ; há tecla premida?
+    JZ   espera_tecla  				  ; se nenhuma tecla premida, repete
+									  ; vai mostrar a linha e a coluna da tecla
+				  
+	CALL converte_valor				  ; converte o valor da linha e guarda no R7
+    SHL R7, 4         				  ; coloca linha no nibble high
+	MOV R6, R7		   				  ; copia o novo valor da linha para o R6
+	MOV R1, R0		   				  ; copia a coluna para o R1
+	CALL converte_valor				  ; reseta o contador (R7)
+	MOV R0, R7						  ; copia o novo valor da coluna para o R0
+	CALL conv_hexa					  ; converte a tecla premida para um valor hexadecimal
+	MOV [tecla_carregada], R6		  ; guarda o valor da tecla premida
+	  
+ha_tecla:              			  	  ; neste ciclo espera-se até NENHUMA tecla estar premida
+
+	YIELD							  ; ciclo potencialmente bloqueante
+    MOVB R0, [R3]      			  	  ; ler do periférico de entrada (colunas)
+    AND  R0, R5        			  	  ; elimina bits para além dos bits 0-3
+    CMP  R0, ZERO         			  ; há tecla premida?
+    JNZ  ha_tecla      			  	  ; se ainda houver uma tecla premida, espera até não haver
+    JMP  teclado         		      ; volta a testar se alguma tecla foi premida
+  
+converte_valor:					  	  ; transforma o valor das linhas e colunas para 0,1,2,3
+	MOV R7, ZERO	   			  	  ; reseta o contador a zero
+
+valor_ciclo:		  	  
+	ADD R7, 1					  	  ; soma um ao contador
+	SHR R1, 1           		  	  ; diminui o valor da linha
+	JNZ valor_ciclo  			  	  ; continua enquanto a linha não for zero
+	SUB R7, 1					  	  ; subtrai 1 ao valor do contador para o valor ficar certo
+	RET		  	  
+  
+conv_hexa:		  	  
+	SHR R6, 2           		  	  ; divide o valor da linha por 4
+	ADD R6, R0          		  	  ; adiciona o valor da coluna e guarda no R6
+	RET		  	  
+
+
+; ****************************************************************
+; *************************** PIXELS *****************************
+; ****************************************************************
+escreve_pixel:
+	MOV  [DEFINE_LINHA], R1			  ; seleciona a linha
+	MOV  [DEFINE_COLUNA], R2		  ; seleciona a coluna
+	MOV  [DEFINE_PIXEL], R3			  ; altera a cor do pixel na linha e coluna já selecionadas
 	RET
 
-move_tiro:							  ; faz com o que o tiro suba no ecrã
-	CALL apaga_tiro
-	SUB R10, 1     			  		  ; decrementa o valor da linha do tiro
-	CALL desenha_tiro
+desenha_pixels:       				  ; desenha os pixels do boneco a partir da tabela
+	MOV	R3, [R4]					  ; obtém a cor do próximo pixel do boneco
+	CALL	escreve_pixel			  ; escreve cada pixel do boneco
+	ADD	R4, 2						  ; endereço da cor do próximo pixel (2 porque cada cor de pixel é uma word)
+    ADD  R2, 1               		  ; próxima coluna
+    SUB  R5, 1						  ; menos uma coluna para tratar
+    JNZ  desenha_pixels      		  ; continua até percorrer toda a largura do objeto
 	RET
 	
-	
-apaga_tiro:
-	PUSH R1
-	PUSH R2
-	PUSH R3
-	MOV R1, R10						  ; R10 tem o valor da linha do tiro guardado
-	MOV R2, COLUNA_TIRO				  ; guardar em R2 o valor associado a coluna onde está o tiro
-	MOV R3, ZERO					  ; guarda o valor 0 em R3
-	CALL escreve_pixel
-	POP R3
-	POP R2
-	POP R1
+apaga_pixels:       				  ; desenha os pixels do boneco a partir da tabela
+	MOV	 R3, 0						  ; cor para apagar o próximo pixel do boneco
+	CALL escreve_pixel			      ; escreve cada pixel do boneco
+    ADD  R2, 1               		  ; próxima coluna
+    SUB  R5, 1						  ; menos uma coluna para tratar
+    JNZ  apaga_pixels      		  	  ; continua até percorrer toda a largura do objeto
 	RET
+
+PROCESS SP_inicial_energia
+
+energia:
+	MOV R1, [evento_int + 4]
+	MOV R10, [estado_jogo]
+	CMP R10, 1
+	JNZ energia
+	MOV R11, [energia_total]
+	SUB R11, 3
+	MOV [energia_total], R11
+	CALL mostra_display               ; atualiza valor do display
+	JMP energia
+
+
+PROCESS SP_inicial_ast         		  ; indicação do início do processo do ast
+
+asteroide:
+	MOV R1, [evento_int]			  ; espera a interrupção ativar
+	MOV R10, [estado_jogo]			  ; copia o estado de jogo para o R10
+	CMP R10, 1						  ; verifica se está a jogar
+	JNZ asteroide					  ; se não estiver volta ao asteróide
+	CALL desenha_ast
+
+ciclo_asteroide:
+	MOV R1, [evento_int]
+	CALL move_ast
+	JMP ciclo_asteroide
+
+
 
 ; ****************************************************************
 ; ************************* ASTERÓIDE ****************************
@@ -454,90 +494,74 @@ ciclo_apaga_ast:
 	POP R2
 	POP R1
 	RET								  ; volta quando terminou de desenhar o asteróide
+
 	
-; ****************************************************************
-; *************************** PIXELS *****************************
-; ****************************************************************
-escreve_pixel:
-	MOV  [DEFINE_LINHA], R1			  ; seleciona a linha
-	MOV  [DEFINE_COLUNA], R2		  ; seleciona a coluna
-	MOV  [DEFINE_PIXEL], R3			  ; altera a cor do pixel na linha e coluna já selecionadas
+
+
+PROCESS SP_inicial_sonda              ; indicação do início do processo do ast
+
+sonda:
+	MOV R0, [tecla_carregada]
+	CMP R0, TECLA_UM
+	JNZ sonda
+	MOV R4, 1
+	MOV R9, LINHA_TIRO 
+	CALL desenha_tiro
+
+ciclo_sonda:
+	MOV R1, [evento_int + 2]
+	MOV R10, [estado_jogo]
+	CMP R10, 1
+	JNZ sonda
+	CALL verifica_limite
+	CMP R4, 0
+	JZ sonda
+	CALL move_tiro
+	JMP ciclo_sonda
+
+verifica_limite:
+	MOV R8, LIMITE_SONDA
+	CMP R8, 0
+	JZ limite_maximo
+	RET
+	
+limite_maximo:
+	MOV R4, 0
+	CALL apaga_tiro
+	RET
+; *****************************************************************
+; **************************** TIRO *******************************
+; *****************************************************************
+
+desenha_tiro:
+	MOV R1, R9    			          ; guardar em R1 o valor associado a linha onde está o tiro
+	MOV R2, COLUNA_TIRO     		  ; guardar em R2 o valor associado a coluna onde está o tiro
+	MOV R3, COR_TIRO				  ; guardar em R3 o valor associado a cor da sonda
+	CALL escreve_pixel
 	RET
 
-desenha_pixels:       				  ; desenha os pixels do boneco a partir da tabela
-	MOV	R3, [R4]					  ; obtém a cor do próximo pixel do boneco
-	CALL	escreve_pixel			  ; escreve cada pixel do boneco
-	ADD	R4, 2						  ; endereço da cor do próximo pixel (2 porque cada cor de pixel é uma word)
-    ADD  R2, 1               		  ; próxima coluna
-    SUB  R5, 1						  ; menos uma coluna para tratar
-    JNZ  desenha_pixels      		  ; continua até percorrer toda a largura do objeto
+move_tiro:							  ; faz com o que o tiro suba no ecrã
+	CALL apaga_tiro
+	SUB R9, 1     			  		  ; decrementa o valor da linha do tiro
+	CALL desenha_tiro
 	RET
 	
-apaga_pixels:       				  ; desenha os pixels do boneco a partir da tabela
-	MOV	R3, 0						  ; cor para apagar o próximo pixel do boneco
-	CALL	escreve_pixel			  ; escreve cada pixel do boneco
-    ADD  R2, 1               		  ; próxima coluna
-    SUB  R5, 1						  ; menos uma coluna para tratar
-    JNZ  apaga_pixels      		  	  ; continua até percorrer toda a largura do objeto
+apaga_tiro:
+	MOV R3, ZERO					  ; guarda o valor 0 em R3
+	CALL escreve_pixel
 	RET
 
-PROCESS SP_inicial_teclado            ; indicação do início do processo do teclado
-
-teclado:
-	MOV  R1, 1   					  ; para guardar a linha que está a ser testada
-    MOV  R2, TEC_LIN   				  ; endereço do periférico das linhas
-    MOV  R3, TEC_COL   				  ; endereço do periférico das colunas~
-
-espera_tecla:          			  	  ; neste ciclo espera-se até uma tecla ser premida
-
-	YIELD                             ; ciclo potencialmente bloqueante
-	
-    ROL R1, 1				  
-    MOVB [R2], R1      				  ; escrever no periférico de saída (linhas)
-    MOVB R0, [R3]      				  ; ler do periférico de entrada (colunas)
-    AND  R0, R5        				  ; elimina bits para além dos bits 0-3
-    CMP  R0, ZERO       			  ; há tecla premida?
-    JZ   espera_tecla  				  ; se nenhuma tecla premida, repete
-									  ; vai mostrar a linha e a coluna da tecla
-				  
-	CALL converte_valor				  ; converte o valor da linha e guarda no R7
-    SHL R7, 4         				  ; coloca linha no nibble high
-	MOV R6, R7		   				  ; copia o novo valor da linha para o R6
-	MOV R1, R0		   				  ; copia a coluna para o R1
-	CALL converte_valor				  ; reseta o contador (R7)
-	MOV R0, R7						  ; copia o novo valor da coluna para o R0
-	CALL conv_hexa					  ; converte a tecla premida para um valor hexadecimal
-	MOV [tecla_carregada], R6		  ; guarda o valor da tecla premida
-	  
-ha_tecla:              			  	  ; neste ciclo espera-se até NENHUMA tecla estar premida
-
-	YIELD							  ; ciclo potencialmente bloqueante
-    MOVB R0, [R3]      			  	  ; ler do periférico de entrada (colunas)
-    AND  R0, R5        			  	  ; elimina bits para além dos bits 0-3
-    CMP  R0, ZERO         			  ; há tecla premida?
-    JNZ  ha_tecla      			  	  ; se ainda houver uma tecla premida, espera até não haver
-    JMP  teclado         		      ; volta a testar se alguma tecla foi premida
-  
-converte_valor:					  	  ; transforma o valor das linhas e colunas para 0,1,2,3
-	MOV R7, ZERO	   			  	  ; reseta o contador a zero
-
-valor_ciclo:		  	  
-	ADD R7, 1					  	  ; soma um ao contador
-	SHR R1, 1           		  	  ; diminui o valor da linha
-	JNZ valor_ciclo  			  	  ; continua enquanto a linha não for zero
-	SUB R7, 1					  	  ; subtrai 1 ao valor do contador para o valor ficar certo
-	RET		  	  
-  
-conv_hexa:		  	  
-	SHR R6, 2           		  	  ; divide o valor da linha por 4
-	ADD R6, R0          		  	  ; adiciona o valor da coluna e guarda no R6
-	RET		  	  
-
-
+;***************************************************************************************************
 rot_ast:
+	PUSH R1
+	MOV [evento_int], R1
+	POP R1
 	RFE
 
-rot_sondas:
+rot_sonda:
+	PUSH R1
+	MOV [evento_int + 2], R1
+	POP R1
 	RFE
 
 rot_energia:
