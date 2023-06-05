@@ -87,6 +87,7 @@ DEF_NAVE:							  ; tabela que define o boneco (cor, largura, pixels)
 	WORD		0, 0, 0, 0, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, 0, 0, 0, 0
 	
 DEF_AST:
+	WORD		LARGURA_AST, ALTURA_AST
 	WORD 		0, VERDE_ESCURO, VERDE_ESCURO, VERDE_ESCURO, 0
 	WORD 		VERDE_ESCURO, VERDE_CLARO, VERDE_CLARO, VERDE_CLARO, VERDE_ESCURO
 	WORD 		VERDE_ESCURO, VERDE_CLARO, VERDE_CLARO, VERDE_CLARO, VERDE_ESCURO         
@@ -118,7 +119,7 @@ inicio:
 	MOV  R8, LINHA_AST				  ; registo com a linha do pixel de referencia asteroide
 	MOV  R9, COLUNA_AST 			  ; registo com a coluna do pixel de referencia asteroide
 	MOV  R10, LINHA_TIRO			  ; registo com a linha do tiro
-	MOV  [R4], ZERO					  ; reseta os displays
+	MOV  [R4], R7					  ; reseta os displays
                             
     ;MOV  [APAGA_AVISO], R1			  ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
     ;MOV  [APAGA_ECRÃ], R1			  ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
@@ -379,8 +380,10 @@ valores_ast:
 	MOV R1, R8						  ; copia a linha do pixel de referência do asteroide
 	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
 	MOV R4, DEF_AST					  ; guarda em R4 o design da nave
-	MOV R5, LARGURA_AST				  ; guarda em R5 a largura da nave
-	MOV R6, ALTURA_AST				  ; guarda em R6 a altura da nave
+	MOV R5, [R4]					  ; guarda em R5 a largura da nave
+	ADD R4, 2
+	MOV R6, [R4]				      
+	ADD R4, 2						  ; guarda em R6 a altura da nave
 	RET
 	
 desenha_ast:
