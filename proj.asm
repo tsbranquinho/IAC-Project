@@ -751,49 +751,46 @@ verifica_asteroide:
 ; ******************************************************************************
 
 
+;reinicia_ast:
+;	CALL apaga_ast					  ; se não move o asteróide mais uma linha
+;	MOV R8, COLUNA_AST				  ; reinicia a coluna inicial em que o asteróide será desenhado
+;	MOV R9, LINHA_AST				  ; reinicia a linha incial em que o asteróide será desenhado
+;	JMP asteroide_um				  ; volta ao ciclo para reiniciar o movimento do asteróide
+
+
+;	MOV R0, 23						  ; move o valor da linha em que o asteróide colide com a nave
+;	CMP R9, R0						  ; ver se o asteróide colidiu com a nave
+;   JZ reinicia_ast				      ; se colidiu reinicia o asteróide
+;
+;	PROCESSO PARA REINICIAR ASTEROIDES 1 e 3
+
+
+
+
 
 
 
 PROCESS SP_inicial_ast1         	  ; indicação do início do processo do asteroide 1
+
+
+; R8 FICA COM A LINHA DO PIXEL DE REFERENCIA INICIAL DO ASTEROIDE 
+; 
+; R9 FICA COM A COLUNA DO PIXEL DE REFERENCIA INICIAL DO ASTEROIDE
 
 asteroide_um:
 	MOV R1, [evento_int]		  	  ; espera a interrupção ativar
 	MOV R10, [estado_jogo]			  ; copia o estado de jogo para o R10
 	CMP R10, 1						  ; verifica se está a jogar
 	JNZ asteroide_um				  ; se não estiver volta ao asteróide
-	CALL desenha_ast				  ; desenha o asteróide no ínicio
 
-ciclo_asteroide:
-    MOV R1, [evento_int]              ; espera a interrupção ativar
-    MOV R10, [estado_jogo]            ; copia o estado de jogo para o R10
-    CMP R10, 1                        ; verifica se está a jogar
-    JNZ ciclo_asteroide               ; se não estiver volta ao ciclo
-    CALL move_ast					  ; move o asteroide uma linha
-	MOV R0, 23						  ; move o valor da linha em que o asteróide colide com a nave
-	CMP R9, R0						  ; ver se o asteróide colidiu com a nave
-    JZ reinicia_ast				      ; se colidiu reinicia o asteróide
-	JMP ciclo_asteroide				  ; se não colidiu volta para o ciclo para continuar a descer o asteróide
-
-reinicia_ast:
-	CALL apaga_ast					  ; se não move o asteróide mais uma linha
-	MOV R8, COLUNA_AST				  ; reinicia a coluna inicial em que o asteróide será desenhado
-	MOV R9, LINHA_AST				  ; reinicia a linha incial em que o asteróide será desenhado
-	JMP asteroide_um				  ; volta ao ciclo para reiniciar o movimento do asteróide
-
-
-valores_ast:
+desenha_ast:
 	MOV R1, R8						  ; copia a linha do pixel de referência do asteroide
 	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
-	MOV R4, DEF_AST					  ; guarda em R4 o design da nave
-	MOV R5, [R4]					  ; guarda em R5 a largura da nave
-	ADD R4, 2						  ; altera o R4 para guardar o endereço da altura da nave
-	MOV R6, [R4]				      ; guarda no R6 a altura da nave
-	ADD R4, 2						  ; altera o R4 para guardar o endereço das cores da nave
-	RET
-	
-desenha_ast:
-	; TIREI O PUSH E POP DO PRA TESTAR MERDAS
-	CALL valores_ast
+	MOV R4, DEF_AST					  ; guarda em R4 o design do asteróide
+	MOV R5, [R4]					  ; guarda em R5 a largura do asteróide
+	ADD R4, 2						  ; altera o R4 para guardar o endereço da altura do asteróide
+	MOV R6, [R4]				      ; guarda no R6 a altura do asteróide
+	ADD R4, 2						  ; altera o R4 para guardar o endereço das cores do asteróide
 	
 ciclo_desenha_ast:					  ; altera os valores para desenhar a próxima linha do asteroide
 	CALL desenha_pixels
@@ -802,8 +799,17 @@ ciclo_desenha_ast:					  ; altera os valores para desenhar a próxima linha do a
 	ADD R1, 1						  ;	troca a linha em que se está a desenhar
 	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
 	JNZ ciclo_desenha_ast			  ; repete o ciclo até desenhar todas as linhas do asteroide
-	; TIREI O PUSH E POP DO PRA TESTAR MERDAS
 	RET								  ; volta quando terminou de desenhar o asteroide
+
+ciclo_asteroide:
+    MOV R1, [evento_int]              ; espera a interrupção ativar
+    MOV R10, [estado_jogo]            ; copia o estado de jogo para o R10
+    CMP R10, 1                        ; verifica se está a jogar
+    JNZ ciclo_asteroide               ; se não estiver volta ao ciclo
+    CALL move_ast					  ; se estiver move o asteróide uma linha
+	JMP ciclo_asteroide				  ; se não colidiu volta para o ciclo para continuar a descer o asteróide
+
+
 
 move_ast:							  ; rotina responsável por mover o asteroide
 	CALL apaga_ast			
@@ -813,7 +819,6 @@ move_ast:							  ; rotina responsável por mover o asteroide
 	RET
 	
 apaga_ast:
-	; TIREI O PUSH E POP DO PRA TESTAR MERDAS
 	CALL valores_ast
 	
 ciclo_apaga_ast:
@@ -823,7 +828,7 @@ ciclo_apaga_ast:
 	ADD R1, 1						  ;	troca a linha em que se está a desenhar
 	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
 	JNZ ciclo_apaga_ast				  ; repete até apagar todo o asteroide
-	; TIREI O PUSH E POP DO PRA TESTAR MERDAS
+
 	RET								  ; volta quando terminou de desenhar o asteróide
 
 	
@@ -836,21 +841,23 @@ PROCESS SP_inicial_sonda_central              ; indicação do início do proces
 
 sonda_central:
 	MOV R0, [tecla_1_carregada]
+	MOV R2, COLUNA_TIRO
 	MOV R4, DISPLAYS
+	MOV R5, R2
 	MOV R6, 1								  ; indica que a sonda ainda não chegou ao limite
 	MOV R9, LINHA_TIRO 
-	MOV R2, COLUNA_TIRO
-	MOV R5, R2
 	MOV R11, [energia_total]
 	SUB R11, 5
 	MOV [energia_total], R11
 	CALL mostra_display
 	CALL desenha_tiro
-	MOV R1, 1
-	MOV [REPRODUZ], R1
+	MOV R0, 1
+	MOV [REPRODUZ], R0
+	MOV R1, -1								  ; o quanto as linhas vão variar
+	MOV R2, 0								  ; o quanto as colunas vão variar
 
 ciclo_sonda:
-	MOV R1, [evento_int + 2]
+	MOV R0, [evento_int + 2]
 	MOV R10, [estado_jogo]
 	CMP R10, 1
 	JNZ ciclo_sonda
@@ -874,18 +881,20 @@ sonda_esquerda:
 	MOV [energia_total], R11
 	CALL mostra_display
 	CALL desenha_tiro
-	MOV R1, 1
-	MOV [REPRODUZ], R1
+	MOV R0, 0
+	MOV [REPRODUZ], R0
+	MOV R1, -1									; o quanto as linhas vão variar
+	MOV R2, -1									; o quanto as colunas vão variar
 
 ciclo_sonda_esquerda:
-	MOV R1, [evento_int + 2]
+	MOV R0, [evento_int + 2]
 	MOV R10, [estado_jogo]
 	CMP R10, 1
 	JNZ ciclo_sonda_esquerda
 	CALL verifica_limite
 	CMP R6, 0
 	JZ sonda_esquerda
-	CALL move_tiro_esquerda
+	CALL move_tiro
 	JMP ciclo_sonda_esquerda
 
 PROCESS SP_inicial_sonda_direita
@@ -902,18 +911,20 @@ sonda_direita:
 	MOV [energia_total], R11
 	CALL mostra_display
 	CALL desenha_tiro
-	MOV R1, 1
-	MOV [REPRODUZ], R1
+	MOV R0, 1
+	MOV [REPRODUZ], R0
+	MOV R1, -1									 ; o quanto as linhas vão variar
+	MOV R2, 1									 ; o quanto as colunas vão variar
 
 ciclo_sonda_direita:
-	MOV R1, [evento_int + 2]
+	MOV R0, [evento_int + 2]
 	MOV R10, [estado_jogo]
 	CMP R10, 1
 	JNZ ciclo_sonda_direita
 	CALL verifica_limite
 	CMP R6, 0
 	JZ sonda_direita
-	CALL move_tiro_direita
+	CALL move_tiro
 	JMP ciclo_sonda_direita
 	
 verifica_limite:
@@ -940,7 +951,8 @@ desenha_tiro:
 
 move_tiro:							  ; faz com o que o tiro suba no ecrã
 	CALL apaga_tiro
-	SUB R9, 1     			  		  ; decrementa o valor da linha do tiro
+	ADD R9, R1     			  		  ; muda o valor da linha do tiro
+	ADD R5, R2						  ; muda o valor da coluna do tiro
 	CALL desenha_tiro
 	RET
 
