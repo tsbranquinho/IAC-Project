@@ -1,4 +1,4 @@
-; *********************************************************************
+; ******************************************************************************
 ; * IST-UL, 2022/2023
 ; * Introdução à Arquitetura de Computadores
 ; * Projeto do Jogo "Beyond Mars"
@@ -9,9 +9,12 @@
 ; *
 ; * Descrição: Entrega intermédia.
 
-; **********************************************************************
-; ************************** CONSTANTES ********************************
-; **********************************************************************
+
+
+; ******************************************************************************
+; ******************************** CONSTANTES **********************************
+; ******************************************************************************
+
 DISPLAYS     EQU 0A000H  							; endereço dos displays de 7 segmentos (periférico POUT-1)
 TEC_LIN      EQU 0C000H  							; endereço das linhas do teclado (periférico POUT-2)
 TEC_COL      EQU 0E000H  							; endereço das colunas do teclado (periférico PIN)
@@ -36,6 +39,7 @@ APAGA_AVISO     		EQU COMANDOS + 40H		; endereço do comando para apagar o aviso
 APAGA_ECRÃ	 			EQU COMANDOS + 02H		; endereço do comando para apagar todos os pixels já desenhados
 SELECIONA_CENARIO_FUNDO EQU COMANDOS + 42H		; endereço do comando para selecionar uma imagem de fundo
 APAGA_CENARIO_FUNDO     EQU COMANDOS + 44H		; endereço do comando para apagar a imagem de fundo
+COLOCA_CENARIO_FRONTAL  EQU COMANDOS + 46H		; endereço do comnando para colocar um cenário frontal
 SELECIONA_VIDEO_FUNDO   EQU COMANDOS + 48H		; endereço do comando para selecionar um vídeo de fundo
 SELECIONA_ESTADO_VID	EQU COMANDOS + 52H		; endereço do comando para selecionar o estado do vídeo
 REPRODUZ		    	EQU COMANDOS + 5AH		; endereço do comando para tocar um som/vídeo
@@ -80,9 +84,9 @@ ROXO			    EQU 0FB0FH
 PRETO 				EQU 0F000H
 
 
-; **********************************************************************
-; ******************************* DADOS ********************************
-; **********************************************************************
+; ******************************************************************************
+; *********************************** DADOS ************************************
+; ******************************************************************************
 	PLACE       1000H
 
     STACK 100H            		      ; espaço reservado para o programa principal
@@ -147,7 +151,7 @@ estado_jogo:
 nave_atual:
 	WORD 0					  ; nave atual (0-7)
 
-DEF_NAVE_0:							  ; tabela que define o boneco (cor, largura, pixels)
+DEF_NAVE_0:					  ; tabela que define o boneco (cor, largura, pixels)
 	WORD		0, 0, 0, 0, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, 0, 0, 0, 0
 	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
 	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, ROXO, AZUL_CLARO, PRETO, VERDE_CLARO, BRANCO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
@@ -215,21 +219,20 @@ DEF_NAVE_7:
 DEF_AST:
 	WORD		LARGURA_AST, ALTURA_AST
 	WORD 		0, VERDE_ESCURO, VERDE_ESCURO, VERDE_ESCURO, 0
-	WORD 		VERDE_ESCURO, VERDE_CLARO, VERDE_CLARO, VERDE_CLARO, VERDE_ESCURO
+	WORD 		VERDE_ESCURO, VERDE_ESCURO, VERDE_CLARO, VERDE_ESCURO, VERDE_ESCURO
 	WORD 		VERDE_ESCURO, VERDE_CLARO, VERDE_CLARO, VERDE_CLARO, VERDE_ESCURO         
-	WORD 		VERDE_ESCURO, VERDE_CLARO, VERDE_CLARO, VERDE_CLARO, VERDE_ESCURO
+	WORD 		VERDE_ESCURO, VERDE_ESCURO, VERDE_CLARO, VERDE_ESCURO, VERDE_ESCURO
 	WORD 		0, VERDE_ESCURO , VERDE_ESCURO, VERDE_ESCURO, 0
 	
 DEF_TIRO:
 	WORD 		LINHA_TIRO, COLUNA_TIRO
 	WORD		COR_TIRO
 						
-; **********************************************************************
-; ***************************** CÓDIGO *********************************
-; **********************************************************************
+; ******************************************************************************
+; ********************************** CÓDIGO ************************************
+; ******************************************************************************
 	PLACE 0
 inicio:
-
 
 	MOV  SP, SP_inicial_principal	  ; inicializa SP para a palavra a seguir
 									  ; à última da pilha
@@ -373,7 +376,7 @@ pausa_jogo:
 	MOV  R1, 0                         ; vídeo número 0
 	MOV  [PAUSA], R1				   ; reproduz o vídeo número 0
 	MOV  R1, 1						   ; imagem número 1
-	MOV  [SELECIONA_CENARIO_FUNDO], R1 ; reproduz a imagem número 1
+	MOV  [COLOCA_CENARIO_FRONTAL], R1 ; reproduz a imagem número 1
 	JMP  ciclo
 
 retoma_jogo:
@@ -386,9 +389,9 @@ retoma_jogo:
 	MOV  [CONTINUA], R1				   ; continua a reproduzir o vídeo número 0
 	JMP  ciclo
 
-; *****************************************************************
-; *************************** DISPLAY *****************************
-; *****************************************************************
+; ******************************************************************************
+; ******************************** DISPLAY *************************************
+; ******************************************************************************
 
 mostra_display: 
 	PUSH R1
@@ -427,9 +430,9 @@ escreve_display:
 	RET	
 
 
-; *****************************************************************
-; ************************** TECLADO ******************************
-; *****************************************************************
+; ******************************************************************************
+; ********************************* TECLADO ************************************
+; ******************************************************************************
 
 PROCESS SP_inicial_teclado            ; indicação do início do processo do teclado
 
@@ -484,9 +487,9 @@ conv_hexa:
 	RET		  	  
 
 
-; *****************************************************************
-; ***************************** NAVE ******************************
-; *****************************************************************
+; ******************************************************************************
+; *********************************** NAVE *************************************
+; ******************************************************************************
 
 PROCESS SP_inicial_nave
 
@@ -597,9 +600,9 @@ linha_seguinte:						  ; passa para a próxima linha
 	CALL desenha_pixels
 	JMP ciclo_nave
 
-; ****************************************************************
-; *************************** PIXELS *****************************
-; ****************************************************************
+; ******************************************************************************
+; ********************************* PIXELS *************************************
+; ******************************************************************************
 escreve_pixel:
 	MOV  [DEFINE_LINHA], R1			  ; seleciona a linha
 	MOV  [DEFINE_COLUNA], R2		  ; seleciona a coluna
@@ -623,6 +626,11 @@ apaga_pixels:       				  ; desenha os pixels do boneco a partir da tabela
     JNZ  apaga_pixels      		  	  ; continua até percorrer toda a largura do objeto
 	RET
 
+
+; ******************************************************************************
+; ********************************** ENERGIA ***********************************
+; ******************************************************************************
+
 PROCESS SP_inicial_energia
 
 energia:
@@ -637,9 +645,9 @@ energia:
 	JMP energia
 
 
-; ****************************************************************
-; ************************ ASTEROIDES ****************************
-; ****************************************************************
+; ******************************************************************************
+; ****************************** ASTERÓIDES ************************************
+; ******************************************************************************
 
 PROCESS SP_inicial_ast         		  ; indicação do início do processo do ast
 
@@ -700,9 +708,7 @@ move_ast:							  ; rotina responsável por mover o asteroide
 	ADD R9, 1						  ; modifica a linha de referencia para o desenho do asteroide
 	CALL desenha_ast
 	MOV    R7, 1            		  ; som com número 0
-    MOV [REPRODUZ], R7       		  ; comando para tocar o som
 	RET
-	
 	
 apaga_ast:
 	PUSH R1
@@ -732,9 +738,9 @@ ciclo_apaga_ast:
 
 	
 
-; ****************************************************************
-; *************************** SONDAS *****************************
-; ****************************************************************
+; ******************************************************************************
+; ********************************* SONDAS *************************************
+; ******************************************************************************
 
 PROCESS SP_inicial_sonda_central              ; indicação do início do processo da sonda central
 
@@ -750,6 +756,8 @@ sonda_central:
 	MOV [energia_total], R11
 	CALL mostra_display
 	CALL desenha_tiro
+	MOV R1, 1
+	MOV [REPRODUZ], R1
 
 ciclo_sonda:
 	MOV R1, [evento_int + 2]
@@ -776,6 +784,8 @@ sonda_esquerda:
 	MOV [energia_total], R11
 	CALL mostra_display
 	CALL desenha_tiro
+	MOV R1, 1
+	MOV [REPRODUZ], R1
 
 ciclo_sonda_esquerda:
 	MOV R1, [evento_int + 2]
@@ -802,6 +812,8 @@ sonda_direita:
 	MOV [energia_total], R11
 	CALL mostra_display
 	CALL desenha_tiro
+	MOV R1, 1
+	MOV [REPRODUZ], R1
 
 ciclo_sonda_direita:
 	MOV R1, [evento_int + 2]
@@ -825,9 +837,9 @@ limite_maximo:
 	CALL apaga_tiro
 	RET
 
-; *****************************************************************
-; **************************** TIRO *******************************
-; *****************************************************************
+; ******************************************************************************
+; *********************************** TIRO *************************************
+; ******************************************************************************
 
 desenha_tiro:
 	MOV R1, R9    			          ; guardar em R1 o valor associado a linha onde está o tiro
@@ -841,7 +853,7 @@ move_tiro:							  ; faz com o que o tiro suba no ecrã
 	SUB R9, 1     			  		  ; decrementa o valor da linha do tiro
 	CALL desenha_tiro
 	RET
-	
+
 move_tiro_esquerda:
 	CALL apaga_tiro
 	SUB R5, 1
@@ -863,9 +875,9 @@ apaga_tiro:
 	CALL escreve_pixel
 	RET
 
-; ****************************************************************
-; *********************** INTERRUPÇÕES ***************************
-; ****************************************************************
+; ******************************************************************************
+; ******************************* INTERRUPÇÕES *********************************
+; ******************************************************************************
 
 rot_ast:
 	PUSH R1
