@@ -312,42 +312,6 @@ obtem_tecla:
 	JZ  call_estado_pausa
 	JMP ciclo
 
-mostra_display: 
-	PUSH R1
-	PUSH R2
-	PUSH R3
-	PUSH R5
-	PUSH R6
-	PUSH R7
-	MOV R1, 0
-	MOV R11, [energia_total]
-	MOV R7, R11
-	MOV R2, 1000
-	MOV R5, 10
-	JMP converte_decimal
-
-converte_decimal:
-	MOD R7, R2 						  ;passo 1
-	DIV R2, R5 						  ;passo 2
-	MOV R6, R2
-	CMP R6, 1
-	JLT escreve_display 			  ;passo 3
-	MOV R3, R7
-	DIV R3, R2 						  ;passo 4
-	SHL R1, 4 						  ;passo 5
-	OR R1, R3 						  ;passo 6
-	JMP converte_decimal
-
-escreve_display:
-	MOV [R4], R1					  ; escreve no periférico do display
-	POP R7
-	POP R6
-	POP R5
-	POP R3
-	POP R2
-	POP R1
-	RET	
-
 call_verifica_tecla:
 	CALL verifica_tecla
 	JMP ciclo
@@ -421,6 +385,104 @@ retoma_jogo:
 	MOV  R1, 0                         ; vídeo número 0
 	MOV  [CONTINUA], R1				   ; continua a reproduzir o vídeo número 0
 	JMP  ciclo
+
+; *****************************************************************
+; *************************** DISPLAY *****************************
+; *****************************************************************
+
+mostra_display: 
+	PUSH R1
+	PUSH R2
+	PUSH R3
+	PUSH R5
+	PUSH R6
+	PUSH R7
+	MOV R1, 0
+	MOV R11, [energia_total]
+	MOV R7, R11
+	MOV R2, 1000
+	MOV R5, 10
+	JMP converte_decimal
+
+converte_decimal:
+	MOD R7, R2 						  ;passo 1
+	DIV R2, R5 						  ;passo 2
+	MOV R6, R2
+	CMP R6, 1
+	JLT escreve_display 			  ;passo 3
+	MOV R3, R7
+	DIV R3, R2 						  ;passo 4
+	SHL R1, 4 						  ;passo 5
+	OR R1, R3 						  ;passo 6
+	JMP converte_decimal
+
+escreve_display:
+	MOV [R4], R1					  ; escreve no periférico do display
+	POP R7
+	POP R6
+	POP R5
+	POP R3
+	POP R2
+	POP R1
+	RET	
+
+
+; *****************************************************************
+; ************************** TECLADO ******************************
+; *****************************************************************
+
+PROCESS SP_inicial_teclado            ; indicação do início do processo do teclado
+
+teclado:
+	MOV  R1, 1   					  ; para guardar a linha que está a ser testada
+    MOV  R2, TEC_LIN   				  ; endereço do periférico das linhas
+    MOV  R3, TEC_COL   				  ; endereço do periférico das colunas~
+
+espera_tecla:          			  	  ; neste ciclo espera-se até uma tecla ser premida
+
+	YIELD                             ; ciclo potencialmente bloqueante
+	
+    ROL R1, 1				  
+    MOVB [R2], R1      				  ; escrever no periférico de saída (linhas)
+    MOVB R0, [R3]      				  ; ler do periférico de entrada (colunas)
+    AND  R0, R5        				  ; elimina bits para além dos bits 0-3
+    CMP  R0, ZERO       			  ; há tecla premida?
+    JZ   espera_tecla  				  ; se nenhuma tecla premida, repete
+									  ; vai mostrar a linha e a coluna da tecla
+				  
+	CALL converte_valor				  ; converte o valor da linha e guarda no R7
+    SHL R7, 4         				  ; coloca linha no nibble high
+	MOV R6, R7		   				  ; copia o novo valor da linha para o R6
+	MOV R1, R0		   				  ; copia a coluna para o R1
+	CALL converte_valor				  ; reseta o contador (R7)
+	MOV R0, R7						  ; copia o novo valor da coluna para o R0
+	CALL conv_hexa					  ; converte a tecla premida para um valor hexadecimal
+	MOV [tecla_carregada], R6		  ; guarda o valor da tecla premida
+	  
+ha_tecla:              			  	  ; neste ciclo espera-se até NENHUMA tecla estar premida
+
+	YIELD							  ; ciclo potencialmente bloqueante
+    MOVB R0, [R3]      			  	  ; ler do periférico de entrada (colunas)
+    AND  R0, R5        			  	  ; elimina bits para além dos bits 0-3
+    CMP  R0, ZERO         			  ; há tecla premida?
+    JNZ  ha_tecla      			  	  ; se ainda houver uma tecla premida, espera até não haver
+    JMP  teclado         		      ; volta a testar se alguma tecla foi premida
+  
+converte_valor:					  	  ; transforma o valor das linhas e colunas para 0,1,2,3
+	MOV R7, ZERO	   			  	  ; reseta o contador a zero
+
+valor_ciclo:		  	  
+	ADD R7, 1					  	  ; soma um ao contador
+	SHR R1, 1           		  	  ; diminui o valor da linha
+	JNZ valor_ciclo  			  	  ; continua enquanto a linha não for zero
+	SUB R7, 1					  	  ; subtrai 1 ao valor do contador para o valor ficar certo
+	RET		  	  
+  
+conv_hexa:		  	  
+	SHR R6, 2           		  	  ; divide o valor da linha por 4
+	ADD R6, R0          		  	  ; adiciona o valor da coluna e guarda no R6
+	RET		  	  
+
 
 ; *****************************************************************
 ; ***************************** NAVE ******************************
@@ -534,60 +596,6 @@ ciclo_nave:							  ; altera os valores para desenhar a próxima linha da nave
 linha_seguinte:						  ; passa para a próxima linha
 	CALL desenha_pixels
 	JMP ciclo_nave
-	
-
-PROCESS SP_inicial_teclado            ; indicação do início do processo do teclado
-
-teclado:
-	MOV  R1, 1   					  ; para guardar a linha que está a ser testada
-    MOV  R2, TEC_LIN   				  ; endereço do periférico das linhas
-    MOV  R3, TEC_COL   				  ; endereço do periférico das colunas~
-
-espera_tecla:          			  	  ; neste ciclo espera-se até uma tecla ser premida
-
-	YIELD                             ; ciclo potencialmente bloqueante
-	
-    ROL R1, 1				  
-    MOVB [R2], R1      				  ; escrever no periférico de saída (linhas)
-    MOVB R0, [R3]      				  ; ler do periférico de entrada (colunas)
-    AND  R0, R5        				  ; elimina bits para além dos bits 0-3
-    CMP  R0, ZERO       			  ; há tecla premida?
-    JZ   espera_tecla  				  ; se nenhuma tecla premida, repete
-									  ; vai mostrar a linha e a coluna da tecla
-				  
-	CALL converte_valor				  ; converte o valor da linha e guarda no R7
-    SHL R7, 4         				  ; coloca linha no nibble high
-	MOV R6, R7		   				  ; copia o novo valor da linha para o R6
-	MOV R1, R0		   				  ; copia a coluna para o R1
-	CALL converte_valor				  ; reseta o contador (R7)
-	MOV R0, R7						  ; copia o novo valor da coluna para o R0
-	CALL conv_hexa					  ; converte a tecla premida para um valor hexadecimal
-	MOV [tecla_carregada], R6		  ; guarda o valor da tecla premida
-	  
-ha_tecla:              			  	  ; neste ciclo espera-se até NENHUMA tecla estar premida
-
-	YIELD							  ; ciclo potencialmente bloqueante
-    MOVB R0, [R3]      			  	  ; ler do periférico de entrada (colunas)
-    AND  R0, R5        			  	  ; elimina bits para além dos bits 0-3
-    CMP  R0, ZERO         			  ; há tecla premida?
-    JNZ  ha_tecla      			  	  ; se ainda houver uma tecla premida, espera até não haver
-    JMP  teclado         		      ; volta a testar se alguma tecla foi premida
-  
-converte_valor:					  	  ; transforma o valor das linhas e colunas para 0,1,2,3
-	MOV R7, ZERO	   			  	  ; reseta o contador a zero
-
-valor_ciclo:		  	  
-	ADD R7, 1					  	  ; soma um ao contador
-	SHR R1, 1           		  	  ; diminui o valor da linha
-	JNZ valor_ciclo  			  	  ; continua enquanto a linha não for zero
-	SUB R7, 1					  	  ; subtrai 1 ao valor do contador para o valor ficar certo
-	RET		  	  
-  
-conv_hexa:		  	  
-	SHR R6, 2           		  	  ; divide o valor da linha por 4
-	ADD R6, R0          		  	  ; adiciona o valor da coluna e guarda no R6
-	RET		  	  
-
 
 ; ****************************************************************
 ; *************************** PIXELS *****************************
