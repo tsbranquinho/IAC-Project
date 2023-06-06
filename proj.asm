@@ -16,12 +16,15 @@ DISPLAYS     EQU 0A000H  							; endereço dos displays de 7 segmentos (perifé
 TEC_LIN      EQU 0C000H  							; endereço das linhas do teclado (periférico POUT-2)
 TEC_COL      EQU 0E000H  							; endereço das colunas do teclado (periférico PIN)
 ZERO         EQU 0
+TECLA_ZERO   EQU 0
 TECLA_UM     EQU 1
+TECLA_DOIS   EQU 2
 TECLA_QUATRO EQU 4
 TECLA_CINCO  EQU 5
 TECLA_SEIS   EQU 6
 TECLA_SETE   EQU 7
 TECLA_C    	 EQU 0CH
+TECLA_D      EQU 0DH
 MASCARA      EQU 0FH     							; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
 
 COMANDOS				EQU	6000H				; endereço de base dos comandos do MediaCenter
@@ -32,9 +35,12 @@ DEFINE_PIXEL    		EQU COMANDOS + 12H		; endereço do comando para escrever um pi
 APAGA_AVISO     		EQU COMANDOS + 40H		; endereço do comando para apagar o aviso de nenhum cenário selecionado
 APAGA_ECRÃ	 			EQU COMANDOS + 02H		; endereço do comando para apagar todos os pixels já desenhados
 SELECIONA_CENARIO_FUNDO EQU COMANDOS + 42H		; endereço do comando para selecionar uma imagem de fundo
+APAGA_CENARIO_FUNDO     EQU COMANDOS + 44H		; endereço do comando para apagar a imagem de fundo
 SELECIONA_VIDEO_FUNDO   EQU COMANDOS + 48H		; endereço do comando para selecionar um vídeo de fundo
 SELECIONA_ESTADO_VID	EQU COMANDOS + 52H		; endereço do comando para selecionar o estado do vídeo
-REPRODUZ		    	EQU COMANDOS + 5AH		; endereço do comando para tocar um som
+REPRODUZ		    	EQU COMANDOS + 5AH		; endereço do comando para tocar um som/vídeo
+PAUSA                   EQU COMANDOS + 5EH      ; endereço do comando para pausar um som/vídeo
+CONTINUA                EQU COMANDOS + 60H      ; endereço do comando para continuar um som/vídeo
 
 
 LINHA_NAVE        	EQU 26      				; linha da nave (primeira linha)
@@ -44,7 +50,9 @@ ALTURA_NAVE			EQU 6						; altura da nave
 
 LINHA_TIRO       	EQU 25        				; linha da sonda (primeira linha)
 COLUNA_TIRO			EQU 31       				; coluna da sonda (primeira coluna)
-LIMITE_SONDA        EQU 12
+LIMITE_SONDA        EQU LINHA_TIRO - 11			; limite da sonda
+COLUNA_ESQUERDA     EQU COLUNA_TIRO - 5 		; coluna da sonda esquerda
+COLUNA_DIREITA      EQU COLUNA_TIRO + 5			; coluna da sonda direita
 
 LINHA_AST        	EQU 0       				; linha do asteroide (primeira linha)
 COLUNA_AST			EQU 0       				; coluna do asteroide (primeira coluna)
@@ -65,6 +73,10 @@ AZUL_CLARO			EQU 0A07FH
 VERDE_ESCURO        EQU 0F0A0H
 VERDE_CLARO         EQU 0F2C0H
 AMARELO             EQU 0FFF0H
+VERMELHO		    EQU 0FF00H
+LARANJA        	    EQU 0FF80H
+ROSA				EQU 0FF9FH
+ROXO			    EQU 0FB0FH
 PRETO 				EQU 0F000H
 
 
@@ -86,10 +98,28 @@ SP_inicial_ast:
 SP_inicial_energia:
 
 	STACK 100H						  ; espaço reservado para o processo de movimento da sonda
-SP_inicial_sonda:
+SP_inicial_sonda_central:
+
+	STACK 100H
+SP_inicial_sonda_esquerda:
+
+	STACK 100H
+SP_inicial_sonda_direita:
+
+	STACK 100H						  ; espaço reservado para o processo da nave
+SP_inicial_nave:
 
 tecla_carregada:
 	LOCK 0							  ; forma do teclado comunicar com os outros processos
+
+tecla_0_carregada:
+	LOCK 0
+
+tecla_1_carregada:
+	LOCK 0
+
+tecla_2_carregada:
+	LOCK 0
 
 evento_int:
 	LOCK 0	
@@ -102,7 +132,7 @@ tab:
 	WORD rot_ast					  ; rotina de atendimento da interrupção dos asteróides
 	WORD rot_sonda				      ; rotina de atendimento da interrupção das sondas
 	WORD rot_energia				  ; rotina de atendimento da interrupção da energia (display)
-	WORD 0				  ; rotina de atendimento da interrupção da nave
+	WORD rot_nave				  	  ; rotina de atendimento da interrupção da nave
 
 energia_total:
 	WORD 0					  ; energia da nave
@@ -114,13 +144,73 @@ estado_jogo:
 							  ; 2 - jogo pausado,
 							  ; 3 - jogo terminado
 
-DEF_NAVE:							  ; tabela que define o boneco (cor, largura, pixels)
+nave_atual:
+	WORD 0					  ; nave atual (0-7)
+
+DEF_NAVE_0:							  ; tabela que define o boneco (cor, largura, pixels)
 	WORD		0, 0, 0, 0, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, 0, 0, 0, 0
 	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
-	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, VERDE_ESCURO, VERDE_ESCURO, VERDE_ESCURO, VERDE_ESCURO, VERDE_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
-	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, VERDE_ESCURO, VERDE_ESCURO, VERDE_ESCURO, VERDE_ESCURO, VERDE_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
+	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, ROXO, AZUL_CLARO, PRETO, VERDE_CLARO, BRANCO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
+	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, VERMELHO, AMARELO, PRETO, LARANJA, ROSA, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
 	WORD		PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO
 	WORD		PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO
+
+DEF_NAVE_1:
+	WORD 		0, 0, 0, 0, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, 0, 0, 0, 0
+	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
+	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AMARELO, VERDE_CLARO, PRETO, BRANCO, ROXO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
+	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, VERMELHO, LARANJA, PRETO, ROSA, AZUL_CLARO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
+	WORD 		PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO
+	WORD 		PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO
+
+DEF_NAVE_2:
+	WORD 		0, 0, 0, 0, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, 0, 0, 0, 0
+	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
+	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, ROSA, BRANCO, PRETO, LARANJA, AZUL_CLARO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
+	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, VERDE_CLARO, AMARELO, PRETO, VERMELHO, ROXO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
+	WORD 		PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO
+	WORD 		PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO
+
+DEF_NAVE_3:
+	WORD 		0, 0, 0, 0, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, 0, 0, 0, 0
+	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
+	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, LARANJA, VERMELHO, PRETO, BRANCO, AZUL_CLARO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
+	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AMARELO, VERDE_CLARO, PRETO, ROSA, ROXO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
+	WORD 		PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO
+	WORD 		PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO
+
+DEF_NAVE_4:
+	WORD 		0, 0, 0, 0, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, 0, 0, 0, 0
+	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
+	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, VERDE_CLARO, AMARELO, PRETO, BRANCO, AZUL_CLARO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
+	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, ROXO, AZUL_CLARO, PRETO, LARANJA, VERMELHO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
+	WORD 		PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO
+	WORD 		PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO
+
+DEF_NAVE_5:
+	WORD 		0, 0, 0, 0, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, 0, 0, 0, 0
+	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
+	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AMARELO, LARANJA, PRETO, BRANCO, AZUL_CLARO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
+	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, VERDE_CLARO, VERMELHO, PRETO, ROSA, ROXO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
+	WORD 		PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO
+	WORD 		PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO
+
+DEF_NAVE_6:
+	WORD 		0, 0, 0, 0, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, 0, 0, 0, 0
+	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
+	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, BRANCO, VERMELHO, PRETO, LARANJA, AMARELO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
+	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, VERDE_CLARO, AZUL_CLARO, PRETO, ROSA, ROXO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
+	WORD 		PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO
+	WORD 		PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO
+
+DEF_NAVE_7:
+	WORD 		0, 0, 0, 0, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, 0, 0, 0, 0
+	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
+	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, ROXO, AMARELO, PRETO, LARANJA, VERMELHO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
+	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, VERDE_CLARO, BRANCO, PRETO, AZUL_CLARO, ROSA, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
+	WORD 		PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO
+	WORD 		PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO
+
 	
 DEF_AST:
 	WORD		LARGURA_AST, ALTURA_AST
@@ -173,13 +263,16 @@ cenario_inicial:
 	EI0								  ; ativa interrupção dos asteróides
 	EI1							      ; ativa interrupção das sondas
 	EI2								  ; ativa interrupção da energia (display)
-								      ; ativa interrupção da nave
+	EI3							      ; ativa interrupção da nave
 	EI								  ; ativa interrupções (geral)
 
 	CALL teclado
 	CALL energia
 	CALL asteroide
-	CALL sonda
+	CALL sonda_central
+	CALL sonda_esquerda
+	CALL sonda_direita
+	CALL nave
 
 espera_inicio:
 	MOV R0, [tecla_carregada]
@@ -201,8 +294,10 @@ setup:
 	MOV [energia_total], R11		  ; valor da energia total
 	CALL mostra_display				  ; mostra o valor da energia total no display
       
-	CALL desenha_nave
-	CALL desenha_ast
+	MOV R7, DEF_NAVE_0				  ; endereço do boneco
+	MOV R11, 0						  ; valor da nave atual
+	MOV [nave_atual], R11			  ; guarda o valor da nave atual
+	CALL desenha_nave				  ; desenha a nave
 
 ciclo:
 	MOV R1, 1
@@ -210,7 +305,11 @@ ciclo:
 
 obtem_tecla:
 	MOV R0, [tecla_carregada]
-	CALL verifica_tecla
+	MOV R11, [estado_jogo]
+	CMP R11, 1
+	JZ  call_verifica_tecla
+	CMP R11, 2
+	JZ  call_estado_pausa
 	JMP ciclo
 
 mostra_display: 
@@ -227,35 +326,10 @@ mostra_display:
 	MOV R5, 10
 	JMP converte_decimal
 
-verifica_tecla:		
-	MOV R6, TECLA_QUATRO
-	CMP R6, R0					  	  ; testa se a tecla premida é a 4
-	JZ aumenta_display			  	  ; incrementa o valor do display
-  
-	MOV R6, TECLA_CINCO
-	CMP R6, R0					  	  ; testa se a tecla premida é a 5				
-	JZ diminui_display			  	  ; decrementa o valor do display
-	  
-	RET  	
-
-aumenta_display:
-	MOV R11, [energia_total]
-	ADD R11, 1	
-	MOV [energia_total], R11
-	RET  
-	 			  
-diminui_display:
-	MOV R11, [energia_total]			  
-	SUB R11, 1						  ; decrementa o valor do display
-	MOV [energia_total], R11					  ; escreve no periférico do display
-	RET
-
 converte_decimal:
 	MOD R7, R2 						  ;passo 1
 	DIV R2, R5 						  ;passo 2
 	MOV R6, R2
-	;SUB R6, 5
-	;SUB R6, 5
 	CMP R6, 1
 	JLT escreve_display 			  ;passo 3
 	MOV R3, R7
@@ -274,9 +348,161 @@ escreve_display:
 	POP R1
 	RET	
 
+call_verifica_tecla:
+	CALL verifica_tecla
+	JMP ciclo
+
+call_estado_pausa:
+	CALL verifica_tecla_pausa
+	JMP ciclo
+
+verifica_tecla:	
+
+	MOV R6, TECLA_ZERO
+	CMP R6, R0
+	JZ  ativa_tecla_0
+
+	MOV R6, TECLA_UM
+	CMP R6, R0
+	JZ  ativa_tecla_1
+
+	MOV R6, TECLA_DOIS
+	CMP R6, R0
+	JZ  ativa_tecla_2
+
+	MOV R6, TECLA_D
+	CMP R6, R0
+	JZ  pausa_jogo
+	  
+	RET  
+
+verifica_tecla_pausa:
+
+	MOV R6, TECLA_D
+	CMP R6, R0
+	JZ  retoma_jogo
+
+	RET
+
+ativa_tecla_0:
+	PUSH R1
+	MOV  [tecla_0_carregada], R1
+	POP  R1
+	RET
+
+ativa_tecla_1:
+	PUSH R1
+	MOV  [tecla_1_carregada], R1
+	POP  R1
+	RET
+
+ativa_tecla_2:
+	PUSH R1
+	MOV  [tecla_2_carregada], R1
+	POP  R1
+	RET
+
+pausa_jogo:
+	MOV  R11, 2
+	MOV  [estado_jogo], R11
+	MOV  [APAGA_AVISO], R1			   ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+	MOV  R1, 0                         ; vídeo número 0
+	MOV  [PAUSA], R1				   ; reproduz o vídeo número 0
+	MOV  R1, 1						   ; imagem número 1
+	MOV  [SELECIONA_CENARIO_FUNDO], R1 ; reproduz a imagem número 1
+	JMP  ciclo
+
+retoma_jogo:
+	MOV  R11, 1
+	MOV  [estado_jogo], R11
+	MOV  [APAGA_AVISO], R1			   ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+	MOV  R1, 1						   ; imagem número 1
+	MOV  [APAGA_CENARIO_FUNDO], R1     ; apaga a imagem número 1
+	MOV  R1, 0                         ; vídeo número 0
+	MOV  [CONTINUA], R1				   ; continua a reproduzir o vídeo número 0
+	JMP  ciclo
+
 ; *****************************************************************
 ; ***************************** NAVE ******************************
 ; *****************************************************************
+
+PROCESS SP_inicial_nave
+
+nave:
+	MOV R1, [evento_int + 6]
+	MOV R11, [estado_jogo]
+	CMP R11, 1
+	JNZ nave
+	MOV R10, [nave_atual]
+	CMP R10, 7
+	JZ  mudar_nave_7
+	ADD R10, 1
+	MOV [nave_atual], R10
+	JMP lidar_casos_nave
+	
+mudar_nave_7:
+	MOV R10, 0                         ; volta a nave 0
+	MOV [nave_atual], R10
+	JMP lidar_casos_nave
+
+lidar_casos_nave:
+	CMP R10, 0
+	JZ  caso_nave_0
+	CMP R10, 1
+	JZ  caso_nave_1
+	CMP R10, 2
+	JZ  caso_nave_2
+	CMP R10, 3
+	JZ  caso_nave_3
+	CMP R10, 4
+	JZ  caso_nave_4
+	CMP R10, 5
+	JZ  caso_nave_5
+	CMP R10, 6
+	JZ  caso_nave_6
+	CMP R10, 7
+	JZ  caso_nave_7
+
+caso_nave_0:
+	MOV R7, DEF_NAVE_0
+	CALL desenha_nave
+	JMP nave
+
+caso_nave_1:
+	MOV R7, DEF_NAVE_1
+	CALL desenha_nave
+	JMP nave
+
+caso_nave_2:
+	MOV R7, DEF_NAVE_2
+	CALL desenha_nave
+	JMP nave
+
+caso_nave_3:
+	MOV R7, DEF_NAVE_3
+	CALL desenha_nave
+	JMP nave
+
+caso_nave_4:
+	MOV R7, DEF_NAVE_4
+	CALL desenha_nave
+	JMP nave
+
+caso_nave_5:
+	MOV R7, DEF_NAVE_5
+	CALL desenha_nave
+	JMP nave
+
+caso_nave_6:
+	MOV R7, DEF_NAVE_6
+	CALL desenha_nave
+	JMP nave
+
+caso_nave_7:
+	MOV R7, DEF_NAVE_7
+	CALL desenha_nave
+	JMP nave
+
 desenha_nave:
 	PUSH R1
 	PUSH R2
@@ -286,7 +512,7 @@ desenha_nave:
 	PUSH R6
 	MOV R1, LINHA_NAVE				  ; primeira linha da nave
 	MOV R2, COLUNA_NAVE		  		  ; primeira coluna da nave
-	MOV R4, DEF_NAVE				  ; tabela que define a nave
+	MOV R4, R7				  		  ; tabela que define as naves
 	MOV R5, LARGURA_NAVE			  ; copia a largura da nave
 	MOV R6, ALTURA_NAVE				  ; copia a altura da nave
 	JMP linha_seguinte				  ; começa a desenhar a nave
@@ -373,9 +599,9 @@ escreve_pixel:
 	RET
 
 desenha_pixels:       				  ; desenha os pixels do boneco a partir da tabela
-	MOV	R3, [R4]					  ; obtém a cor do próximo pixel do boneco
-	CALL	escreve_pixel			  ; escreve cada pixel do boneco
-	ADD	R4, 2						  ; endereço da cor do próximo pixel (2 porque cada cor de pixel é uma word)
+	MOV	 R3, [R4]					  ; obtém a cor do próximo pixel do boneco
+	CALL escreve_pixel			      ; escreve cada pixel do boneco
+	ADD	 R4, 2						  ; endereço da cor do próximo pixel (2 porque cada cor de pixel é uma word)
     ADD  R2, 1               		  ; próxima coluna
     SUB  R5, 1						  ; menos uma coluna para tratar
     JNZ  desenha_pixels      		  ; continua até percorrer toda a largura do objeto
@@ -406,14 +632,17 @@ energia:
 PROCESS SP_inicial_ast         		  ; indicação do início do processo do ast
 
 asteroide:
-	MOV R1, [evento_int]			  ; espera a interrupção ativar
+	MOV R1, [evento_int]		  	  ; espera a interrupção ativar
 	MOV R10, [estado_jogo]			  ; copia o estado de jogo para o R10
 	CMP R10, 1						  ; verifica se está a jogar
 	JNZ asteroide					  ; se não estiver volta ao asteróide
 	CALL desenha_ast
 
 ciclo_asteroide:
-	MOV R1, [evento_int]
+	MOV R1, [evento_int]			  ; espera a interrupção ativar
+	MOV R10, [estado_jogo]			  ; copia o estado de jogo para o R10
+	CMP R10, 1						  ; verifica se está a jogar
+	JNZ ciclo_asteroide			  	  ; se não estiver volta ao ciclo
 	CALL move_ast
 	JMP ciclo_asteroide
 
@@ -498,35 +727,92 @@ ciclo_apaga_ast:
 	
 
 
-PROCESS SP_inicial_sonda              ; indicação do início do processo do ast
+PROCESS SP_inicial_sonda_central              ; indicação do início do processo da sonda central
 
-sonda:
-	MOV R0, [tecla_carregada]
-	CMP R0, TECLA_UM
-	JNZ sonda
-	MOV R4, 1
+sonda_central:
+	MOV R0, [tecla_1_carregada]
+	MOV R4, DISPLAYS
+	MOV R6, 1
 	MOV R9, LINHA_TIRO 
+	MOV R2, COLUNA_TIRO
+	MOV R5, R2
+	MOV R11, [energia_total]
+	SUB R11, 5
+	MOV [energia_total], R11
+	CALL mostra_display
 	CALL desenha_tiro
 
 ciclo_sonda:
 	MOV R1, [evento_int + 2]
 	MOV R10, [estado_jogo]
 	CMP R10, 1
-	JNZ sonda
+	JNZ ciclo_sonda
 	CALL verifica_limite
-	CMP R4, 0
-	JZ sonda
+	CMP R6, 0
+	JZ sonda_central
 	CALL move_tiro
 	JMP ciclo_sonda
 
+PROCESS SP_inicial_sonda_esquerda
+
+sonda_esquerda:
+	MOV R0, [tecla_0_carregada]
+	MOV R4, DISPLAYS
+	MOV R6, 1
+	MOV R9, LINHA_TIRO
+	MOV R2, COLUNA_ESQUERDA
+	MOV R5, R2
+	MOV R11, [energia_total]
+	SUB R11, 5
+	MOV [energia_total], R11
+	CALL mostra_display
+	CALL desenha_tiro
+
+ciclo_sonda_esquerda:
+	MOV R1, [evento_int + 2]
+	MOV R10, [estado_jogo]
+	CMP R10, 1
+	JNZ ciclo_sonda_esquerda
+	CALL verifica_limite
+	CMP R6, 0
+	JZ sonda_esquerda
+	CALL move_tiro_esquerda
+	JMP ciclo_sonda_esquerda
+
+PROCESS SP_inicial_sonda_direita
+
+sonda_direita:
+	MOV R0, [tecla_2_carregada]
+	MOV R4, DISPLAYS
+	MOV R6, 1
+	MOV R9, LINHA_TIRO
+	MOV R2, COLUNA_DIREITA
+	MOV R5, R2
+	MOV R11, [energia_total]
+	SUB R11, 5
+	MOV [energia_total], R11
+	CALL mostra_display
+	CALL desenha_tiro
+
+ciclo_sonda_direita:
+	MOV R1, [evento_int + 2]
+	MOV R10, [estado_jogo]
+	CMP R10, 1
+	JNZ ciclo_sonda_direita
+	CALL verifica_limite
+	CMP R6, 0
+	JZ sonda_direita
+	CALL move_tiro_direita
+	JMP ciclo_sonda_direita
+	
 verifica_limite:
 	MOV R8, LIMITE_SONDA
-	CMP R8, 0
+	CMP R8, R9
 	JZ limite_maximo
 	RET
 	
 limite_maximo:
-	MOV R4, 0
+	MOV R6, 0
 	CALL apaga_tiro
 	RET
 ; *****************************************************************
@@ -535,7 +821,7 @@ limite_maximo:
 
 desenha_tiro:
 	MOV R1, R9    			          ; guardar em R1 o valor associado a linha onde está o tiro
-	MOV R2, COLUNA_TIRO     		  ; guardar em R2 o valor associado a coluna onde está o tiro
+	MOV R2, R5    		  			  ; guardar em R2 o valor associado a coluna onde está o tiro
 	MOV R3, COR_TIRO				  ; guardar em R3 o valor associado a cor da sonda
 	CALL escreve_pixel
 	RET
@@ -546,7 +832,23 @@ move_tiro:							  ; faz com o que o tiro suba no ecrã
 	CALL desenha_tiro
 	RET
 	
+move_tiro_esquerda:
+	CALL apaga_tiro
+	SUB R5, 1
+	SUB R9, 1
+	CALL desenha_tiro
+	RET
+
+move_tiro_direita:
+	CALL apaga_tiro
+	ADD R5, 1
+	SUB R9, 1
+	CALL desenha_tiro
+	RET
+
 apaga_tiro:
+	MOV R1, R9
+	MOV R2, R5
 	MOV R3, ZERO					  ; guarda o valor 0 em R3
 	CALL escreve_pixel
 	RET
@@ -571,4 +873,7 @@ rot_energia:
 	RFE
 
 rot_nave:
+	PUSH R1
+	MOV [evento_int + 6], R1
+	POP R1
 	RFE
