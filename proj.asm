@@ -732,7 +732,7 @@ PROCESS SP_inicial_sonda_central              ; indicação do início do proces
 sonda_central:
 	MOV R0, [tecla_1_carregada]
 	MOV R4, DISPLAYS
-	MOV R6, 1
+	MOV R6, 1								  ; indica que a sonda ainda não chegou ao limite
 	MOV R9, LINHA_TIRO 
 	MOV R2, COLUNA_TIRO
 	MOV R5, R2
@@ -758,7 +758,7 @@ PROCESS SP_inicial_sonda_esquerda
 sonda_esquerda:
 	MOV R0, [tecla_0_carregada]
 	MOV R4, DISPLAYS
-	MOV R6, 1
+	MOV R6, 1                                   ; indica que a sonda ainda não chegou ao limite
 	MOV R9, LINHA_TIRO
 	MOV R2, COLUNA_ESQUERDA
 	MOV R5, R2
@@ -784,7 +784,7 @@ PROCESS SP_inicial_sonda_direita
 sonda_direita:
 	MOV R0, [tecla_2_carregada]
 	MOV R4, DISPLAYS
-	MOV R6, 1
+	MOV R6, 1									 ; indica que a sonda ainda não chegou ao limite
 	MOV R9, LINHA_TIRO
 	MOV R2, COLUNA_DIREITA
 	MOV R5, R2
