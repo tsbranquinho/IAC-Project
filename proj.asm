@@ -29,6 +29,7 @@ TECLA_SETE   EQU 7
 TECLA_C    	 EQU 0CH
 TECLA_D      EQU 0DH
 MASCARA      EQU 0FH     							; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
+MASCARA_2    EQU 00FFH
 
 COMANDOS				EQU	6000H				; endereço de base dos comandos do MediaCenter
 
@@ -95,19 +96,28 @@ SP_inicial_principal:
 	STACK 100H						  ; espaço reservado para o processo de leitura do teclado
 SP_inicial_teclado:
 
-	STACK 100H						  ; espaço reservado para o processo de movimento do asteróide
-SP_inicial_ast:
+	STACK 100H						  ; espaço reservado para o processo de movimento do asteróide 1
+SP_inicial_ast1:
+
+	STACK 100H						  ; espaço reservado para o processo de movimento do asteróide 2
+SP_inicial_ast2:
+
+	STACK 100H						  ; espaço reservado para o processo de movimento do asteróide 3
+SP_inicial_ast3:
+
+	STACK 100H						  ; espaço reservado para o processo de movimento do asteróide 4
+SP_inicial_ast4:
 
 	STACK 100H                        ; espaço reservado para o processo de energia
 SP_inicial_energia:
 
-	STACK 100H						  ; espaço reservado para o processo de movimento da sonda
+	STACK 100H						  ; espaço reservado para o processo de movimento da sonda central
 SP_inicial_sonda_central:
 
-	STACK 100H
+	STACK 100H						  ; espaço reservado para o processo de movimento da sonda esquerda
 SP_inicial_sonda_esquerda:
 
-	STACK 100H
+	STACK 100H						  ; espaço reservado para o processo de movimento da sonda direita
 SP_inicial_sonda_direita:
 
 	STACK 100H						  ; espaço reservado para o processo da nave
@@ -150,6 +160,18 @@ estado_jogo:
 
 nave_atual:
 	WORD 0					  ; nave atual (0-7)
+
+asteroide1:
+	WORD 0					  ; asteróide 1 (0-5) (5 significa já andou 1 vez ou não existe)
+
+asteroide2:
+	WORD 0					  ; asteróide 2 (0-5) (5 significa já andou 1 vez ou não existe)
+
+asteroide3:
+	WORD 0					  ; asteróide 3 (0-5) (5 significa já andou 1 vez ou não existe)
+
+asteroide4:
+	WORD 0					  ; asteróide 4 (0-5) (5 significa já andou 1 vez )
 
 DEF_NAVE_0:					  ; tabela que define o boneco (cor, largura, pixels)
 	WORD		0, 0, 0, 0, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, 0, 0, 0, 0
@@ -223,7 +245,25 @@ DEF_AST:
 	WORD 		VERDE_ESCURO, VERDE_CLARO, VERDE_CLARO, VERDE_CLARO, VERDE_ESCURO         
 	WORD 		VERDE_ESCURO, VERDE_ESCURO, VERDE_CLARO, VERDE_ESCURO, VERDE_ESCURO
 	WORD 		0, VERDE_ESCURO , VERDE_ESCURO, VERDE_ESCURO, 0
+
 	
+DEF_ASTE:
+	WORD		LARGURA_AST, ALTURA_AST
+	WORD 		0, VERMELHO, VERMELHO, VERMELHO, 0
+	WORD 		VERMELHO, 0, VERMELHO, 0, VERMELHO
+	WORD 		VERMELHO, VERMELHO, 0, VERMELHO, VERMELHO       
+	WORD 		VERMELHO, 0, VERMELHO, 0, VERMELHO
+	WORD 		0, VERMELHO, VERMELHO, VERMELHO, 0
+	
+DEF_ASTE_EXPLOSAO:
+	WORD		LARGURA_AST, ALTURA_AST
+	WORD 		VERMELHO, 0, 0, 0, VERMELHO
+	WORD 		0, VERMELHO, 0, VERMELHO, 0
+	WORD 		0, 0, VERMELHO, 0, 0       
+	WORD 		0, VERMELHO, 0, VERMELHO, 0
+	WORD 		VERMELHO, 0, 0, 0, VERMELHO
+
+
 DEF_TIRO:
 	WORD 		LINHA_TIRO, COLUNA_TIRO
 	WORD		COR_TIRO
@@ -271,7 +311,10 @@ cenario_inicial:
 
 	CALL teclado
 	CALL energia
-	CALL asteroide
+	CALL asteroide_um
+	;CALL asteroide_dois
+	;CALL asteroide_tres
+	;CALL asteroide_quatro
 	CALL sonda_central
 	CALL sonda_esquerda
 	CALL sonda_direita
@@ -644,34 +687,98 @@ energia:
 	CALL mostra_display               ; atualiza valor do display
 	JMP energia
 
+; ******************************************************************************
+; *************************** PSEUDO-ALEATÓRIO *********************************
+; ******************************************************************************
+
+aleatorio:
+	PUSH R0
+	PUSH R1
+	PUSH R9
+	;R10 vai guardar o tipo de asteróide
+	;R11 vai guardar o número do asteróide
+	MOV  R0, [TEC_COL]                  ; ler do periférico do PIN
+	MOV  R9, MASCARA_2            
+	AND  R0, R9				    		; isolar os 8 bits de menor peso
+	SHR  R0, 4						    ; isolar os bits 7 a 4
+	MOV  R1, R0						    ; copiar para R1
+	SHR  R0, 2						    ; isolar os bits de menor peso
+	MOV  R10, R0					    ; copiar para R10 (tipo de asteróide)
+									    ; 0 - minerável
+										; 1, 2, 3 - não minerável
+	CALL numero_de_asteroide
+	POP  R9
+	POP  R1
+	POP  R0
+	RET
+
+numero_de_asteroide:
+	MOV  R9, 5							; 5 possibilidades de posição
+	MOD  R1, R9						    ; gerar um número entre 0 e 5
+	MOV  R11, R1					    ; copiar para R11 (número do asteróide)
+	CALL verifica_asteroide
+	RET
+
+procura_linear:
+	CMP  R11, 4
+	JZ   caso_4
+	ADD  R11, 1
+	JMP verifica_asteroide
+
+caso_4:
+	MOV  R11, 0
+
+verifica_asteroide:
+	MOV  R9,  [asteroide1]
+	CMP  R11, R9
+	JZ   procura_linear
+
+	MOV  R9,  [asteroide2]
+	CMP  R11, R9
+	JZ   procura_linear
+
+	MOV  R9,  [asteroide3]
+	CMP  R11, R9
+	JZ   procura_linear
+
+	MOV  R9,  [asteroide4]
+	CMP  R11, R9
+	JZ   procura_linear
+	RET
 
 ; ******************************************************************************
 ; ****************************** ASTERÓIDES ************************************
 ; ******************************************************************************
 
-PROCESS SP_inicial_ast         		  ; indicação do início do processo do ast
 
-asteroide:
+
+
+
+PROCESS SP_inicial_ast1         	  ; indicação do início do processo do asteroide 1
+
+asteroide_um:
 	MOV R1, [evento_int]		  	  ; espera a interrupção ativar
 	MOV R10, [estado_jogo]			  ; copia o estado de jogo para o R10
 	CMP R10, 1						  ; verifica se está a jogar
-	JNZ asteroide					  ; se não estiver volta ao asteróide
-	CALL desenha_ast
+	JNZ asteroide_um				  ; se não estiver volta ao asteróide
+	CALL desenha_ast				  ; desenha o asteróide no ínicio
 
 ciclo_asteroide:
     MOV R1, [evento_int]              ; espera a interrupção ativar
     MOV R10, [estado_jogo]            ; copia o estado de jogo para o R10
     CMP R10, 1                        ; verifica se está a jogar
     JNZ ciclo_asteroide               ; se não estiver volta ao ciclo
-    CALL move_ast
-	MOV R0, 24
-	CMP R1, R0
-    JGT reinicia_ast
-	JMP ciclo_asteroide
+    CALL move_ast					  ; move o asteroide uma linha
+	MOV R0, 23						  ; move o valor da linha em que o asteróide colide com a nave
+	CMP R9, R0						  ; ver se o asteróide colidiu com a nave
+    JZ reinicia_ast				      ; se colidiu reinicia o asteróide
+	JMP ciclo_asteroide				  ; se não colidiu volta para o ciclo para continuar a descer o asteróide
 
 reinicia_ast:
 	CALL apaga_ast					  ; se não move o asteróide mais uma linha
-	JMP asteroide				  	  ; volta ao
+	MOV R8, COLUNA_AST				  ; reinicia a coluna inicial em que o asteróide será desenhado
+	MOV R9, LINHA_AST				  ; reinicia a linha incial em que o asteróide será desenhado
+	JMP asteroide_um				  ; volta ao ciclo para reiniciar o movimento do asteróide
 
 
 valores_ast:
@@ -679,19 +786,13 @@ valores_ast:
 	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
 	MOV R4, DEF_AST					  ; guarda em R4 o design da nave
 	MOV R5, [R4]					  ; guarda em R5 a largura da nave
-	ADD R4, 2
-	MOV R6, [R4]				      
-	ADD R4, 2						  ; guarda em R6 a altura da nave
+	ADD R4, 2						  ; altera o R4 para guardar o endereço da altura da nave
+	MOV R6, [R4]				      ; guarda no R6 a altura da nave
+	ADD R4, 2						  ; altera o R4 para guardar o endereço das cores da nave
 	RET
 	
 desenha_ast:
-	PUSH R1
-	PUSH R2
-	PUSH R3
-	PUSH R4
-	PUSH R5
-	PUSH R6
-	PUSH R9
+	; TIREI O PUSH E POP DO PRA TESTAR MERDAS
 	CALL valores_ast
 	
 ciclo_desenha_ast:					  ; altera os valores para desenhar a próxima linha do asteroide
@@ -701,13 +802,7 @@ ciclo_desenha_ast:					  ; altera os valores para desenhar a próxima linha do a
 	ADD R1, 1						  ;	troca a linha em que se está a desenhar
 	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
 	JNZ ciclo_desenha_ast			  ; repete o ciclo até desenhar todas as linhas do asteroide
-	POP R9							  ; repõe todos os valores nos seus registos
-	POP R6							  
-	POP R5
-	POP R4
-	POP R3
-	POP R2
-	POP R1
+	; TIREI O PUSH E POP DO PRA TESTAR MERDAS
 	RET								  ; volta quando terminou de desenhar o asteroide
 
 move_ast:							  ; rotina responsável por mover o asteroide
@@ -715,17 +810,10 @@ move_ast:							  ; rotina responsável por mover o asteroide
 	ADD R8, 1						  ; modifica a coluna de referencia para o desenho do asteroide
 	ADD R9, 1						  ; modifica a linha de referencia para o desenho do asteroide
 	CALL desenha_ast
-	MOV    R7, 1            		  ; som com número 0
 	RET
 	
 apaga_ast:
-	PUSH R1
-	PUSH R2
-	PUSH R3
-	PUSH R4
-	PUSH R5
-	PUSH R6
-	PUSH R9
+	; TIREI O PUSH E POP DO PRA TESTAR MERDAS
 	CALL valores_ast
 	
 ciclo_apaga_ast:
@@ -735,13 +823,7 @@ ciclo_apaga_ast:
 	ADD R1, 1						  ;	troca a linha em que se está a desenhar
 	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
 	JNZ ciclo_apaga_ast				  ; repete até apagar todo o asteroide
-	POP R9							  ; repõe todos os valores nos seus registos
-	POP R6						
-	POP R5
-	POP R4
-	POP R3
-	POP R2
-	POP R1
+	; TIREI O PUSH E POP DO PRA TESTAR MERDAS
 	RET								  ; volta quando terminou de desenhar o asteróide
 
 	
