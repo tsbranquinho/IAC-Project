@@ -659,12 +659,20 @@ asteroide:
 	CALL desenha_ast
 
 ciclo_asteroide:
-	MOV R1, [evento_int]			  ; espera a interrupção ativar
-	MOV R10, [estado_jogo]			  ; copia o estado de jogo para o R10
-	CMP R10, 1						  ; verifica se está a jogar
-	JNZ ciclo_asteroide			  	  ; se não estiver volta ao ciclo
-	CALL move_ast
+    MOV R1, [evento_int]              ; espera a interrupção ativar
+    MOV R10, [estado_jogo]            ; copia o estado de jogo para o R10
+    CMP R10, 1                        ; verifica se está a jogar
+    JNZ ciclo_asteroide               ; se não estiver volta ao ciclo
+    CALL move_ast
+	MOV R0, 24
+	CMP R1, R0
+    JGT reinicia_ast
 	JMP ciclo_asteroide
+
+reinicia_ast:
+	CALL apaga_ast					  ; se não move o asteróide mais uma linha
+	JMP asteroide				  	  ; volta ao
+
 
 valores_ast:
 	MOV R1, R8						  ; copia a linha do pixel de referência do asteroide
