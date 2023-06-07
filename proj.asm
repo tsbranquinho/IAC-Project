@@ -26,6 +26,8 @@ TECLA_QUATRO EQU 4
 TECLA_CINCO  EQU 5
 TECLA_SEIS   EQU 6
 TECLA_SETE   EQU 7
+COLISAO_NAVE EQU 22
+ULTIMA_LINHA EQU 32
 TECLA_C    	 EQU 0CH
 TECLA_D      EQU 0DH
 MASCARA      EQU 0FH     							; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
@@ -163,21 +165,34 @@ estado_jogo:
 nave_atual:
 	WORD 0					  ; nave atual (0-7)
 
+sonda_esquerda:
+	WORD 0, 0, 0              ; sonda esquerda (linha, coluna, colisão)
+
+sonda_direita:
+	WORD 0, 0, 0              ; sonda direita (linha, coluna, colisão)
+
+sonda_central:
+	WORD 0, 0, 0              ; sonda central (linha, coluna, colisão)
+
 asteroide1:
 	WORD 0					  ; sítio onde nasce asteróide 1 (0-5) (5 significa já andou 1 vez ou não existe)
 	WORD 0                    ;	tipo de asteróide
+	WORD 0					  ; posição onde nasce asteróide 1 (0-4) (permanece inalterado até novo asteroide)
 
 asteroide2:
 	WORD 0					  ; sítio onde nasce asteróide 2 (0-5) (5 significa já andou 1 vez ou não existe)
 	WORD 0                    ;	tipo de asteróide
+	WORD 0					  ; posição onde nasce asteróide 2 (0-4) (permanece inalterado até novo asteroide)
 
 asteroide3:
 	WORD 0					  ; sítio onde nasce asteróide 3 (0-5) (5 significa já andou 1 vez ou não existe)
 	WORD 0                    ;	tipo de asteróide
+	WORD 0					  ; posição onde nasce asteróide 3 (0-4) (permanece inalterado até novo asteroide)
 
 asteroide4:
 	WORD 0					  ; sítio onde nasce asteróide 4 (0-5) (5 significa já andou 1 vez )
 	WORD 0                    ;	tipo de asteróide
+	WORD 0					  ; posição onde nasce asteróide 4 (0-4) (permanece inalterado até novo asteroide)
 
 DEF_NAVE_0:					  ; tabela que define o boneco (cor, largura, pixels)
 	WORD		0, 0, 0, 0, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, 0, 0, 0, 0
@@ -345,7 +360,7 @@ setup:
 	MOV  R11, 100					  ; valor do display inicial do jogo
 	MOV [energia_total], R11		  ; valor da energia total
 	CALL mostra_display				  ; mostra o valor da energia total no display
-      
+    
 	MOV R7, DEF_NAVE_0				  ; endereço do boneco
 	MOV R11, 0						  ; valor da nave atual
 	MOV [nave_atual], R11			  ; guarda o valor da nave atual
@@ -356,7 +371,7 @@ setup:
 	MOV [asteroide4], R11			  ; guarda o valor do asteroide 4
 	CALL desenha_nave				  ; desenha a nave
 
-ciclo:
+controlo:
 	MOV R1, 1
     ;MOV [R4], R11      				  ; escreve linha e coluna a zero nos displays
 
@@ -367,15 +382,15 @@ obtem_tecla:
 	JZ  call_verifica_tecla
 	CMP R11, 2
 	JZ  call_estado_pausa
-	JMP ciclo
+	JMP controlo
 
 call_verifica_tecla:
 	CALL verifica_tecla
-	JMP ciclo
+	JMP controlo
 
 call_estado_pausa:
 	CALL verifica_tecla_pausa
-	JMP ciclo
+	JMP controlo
 
 verifica_tecla:	
 
@@ -431,7 +446,7 @@ pausa_jogo:
 	MOV  [PAUSA], R1				   ; reproduz o vídeo número 0
 	MOV  R1, 1						   ; imagem número 1
 	MOV  [COLOCA_CENARIO_FRONTAL], R1 ; reproduz a imagem número 1
-	JMP  ciclo
+	JMP  controlo
 
 retoma_jogo:
 	MOV  R11, 1
@@ -441,7 +456,7 @@ retoma_jogo:
 	MOV  [APAGA_CENARIO_FUNDO], R1     ; apaga a imagem número 1
 	MOV  R1, 0                         ; vídeo número 0
 	MOV  [CONTINUA], R1				   ; continua a reproduzir o vídeo número 0
-	JMP  ciclo
+	JMP  controlo
 
 ; ******************************************************************************
 ; ******************************** DISPLAY *************************************
@@ -780,7 +795,7 @@ verifica_asteroide:
 
 ; R0 guarda o valor adicionado á coluna
 ; asteroide 0 --------> 1
-; asteroides 1,2 e 3 -> 0
+; asteroides 1, 2 e 3 -> 0
 ; asteroide 4 --------> -1
 
 ; R8 FICA COM A LINHA DO PIXEL DE REFERENCIA INICIAL DO ASTEROIDE 
@@ -788,7 +803,7 @@ verifica_asteroide:
 
 ; R9 FICA COM A COLUNA DO PIXEL DE REFERENCIA INICIAL DO ASTEROIDE
 ; asteroide 0 --------> 0
-; asteroides 1,2 e 3 -> 29
+; asteroides 1, 2 e 3 -> 29
 ; asteroide 4 --------> 59
 
 ; R10 - minerável ou não (0, 1, 2 ou 3)
@@ -807,6 +822,7 @@ asteroide_um:
 	CALL escolhe_tipo_ast
 	MOV [asteroide1], R11			  ; guarda o sítio onde nasce o asteroide
 	MOV [asteroide1+2], R10		      ; guarda o tipo de asteroide
+	MOV [asteroide1+4], R11			  ; guarda o sítio onde nasce o asteroide (permanece igual até outro nascer)
 	MOV R8, LINHA_AST				  ; guarda NO R8 a linha que vai começar (linha 0 sempre)
 	CALL desenha_ast1
 	JMP ciclo_asteroide1
@@ -846,9 +862,17 @@ ciclo_asteroide1:
     JNZ ciclo_asteroide1              ; se não estiver volta ao ciclo
     CALL move_ast1					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo				  ; verifica se chegou ao fundo da tela
+	MOV R7, [asteroide1 + 4]		  ; vai buscar o sítio onde nasceu o asteroide
+	CALL verifica_colisoes
+	CMP R11, 1						  ; verifica se houve colisão com a nave
+	JZ 	detetou_colisao_1_nave  	      ; se houver colisão volta a desenhar o asteroide
 	CMP R10, 1						  ; chegar ao fundo (valor 1)
 	JZ  asteroide_um				  ; se chegou ao fundo
 	JMP ciclo_asteroide1			  ; se não chegou fim volta para o ciclo para continuar a descer o asteróide
+
+detetou_colisao_1_nave:
+	CALL push_function1				  ; apaga o asteroide
+	JMP asteroide_um				  ; volta a desenhar o asteroide
 
 move_ast1:							  ; rotina responsável por mover o asteroide
 	CALL push_function1		
@@ -865,6 +889,7 @@ push_function1:
 	PUSH R8
 	MOV  R1, R8						  ; copia a linha do pixel de referência do asteroide
 	MOV R6, ALTURA_AST
+
 apaga_ast1:
 	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
 	MOV R5, LARGURA_AST				  ; largura do asteroide
@@ -894,6 +919,7 @@ asteroide_dois:
 	CALL escolhe_tipo_ast
 	MOV [asteroide2], R11			  ; guarda o sítio onde nasce o asteroide
 	MOV [asteroide2+2], R10		      ; guarda o tipo de asteroide
+	MOV [asteroide2+4], R11			  ; guarda o sítio onde nasce o asteroide (permanece igual até outro nascer)
 	MOV R8, LINHA_AST				  ; guarda NO R8 a linha que vai começar (linha 0 sempre)
 	CALL desenha_ast2
 	JMP ciclo_asteroide2
@@ -933,9 +959,17 @@ ciclo_asteroide2:
     JNZ ciclo_asteroide2              ; se não estiver volta ao ciclo
     CALL move_ast2					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo			      ; verifica se o asteroide chegou ao fim do ecrã
+	MOV R7, [asteroide2 + 4]		  ; obter posicao inicial do asteroide
+	CALL verifica_colisoes			  ; verifica se o asteroide colidiu com a nave
+	CMP R11, 1						  ; verifica se o asteroide colidiu com a nave
+	JZ  detetou_colisao_2_nave	      ; se colidiu volta para o ciclo para criar o asteroide
 	CMP R10, 1					      ; 
 	JZ  asteroide_dois
 	JMP ciclo_asteroide2			  ; se não colidiu volta para o ciclo para continuar a descer o asteróide
+
+detetou_colisao_2_nave:
+	CALL push_function2
+	JMP asteroide_dois
 
 move_ast2:							  ; rotina responsável por mover o asteroide
 	CALL push_function2		
@@ -979,6 +1013,7 @@ asteroide_tres:
 	CALL escolhe_tipo_ast
 	MOV [asteroide3], R11			  ; guarda o sítio onde nasce o asteroide
 	MOV [asteroide3+2], R10		      ; guarda o tipo de asteroide
+	MOV [asteroide3+4], R11			  ; guarda o sítio onde nasce o asteroide (permanece igual até outro nascer)
 	MOV R8, LINHA_AST				  ; guarda NO R8 a linha que vai começar (linha 0 sempre)
 	CALL desenha_ast3
 	JMP ciclo_asteroide3
@@ -1019,9 +1054,18 @@ ciclo_asteroide3:
     JNZ ciclo_asteroide3              ; se não estiver volta ao ciclo
     CALL move_ast3					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo			      ; verifica se o asteroide chegou ao fim do ecrã
+	MOV R7, [asteroide3 + 4]
+	CALL verifica_colisoes		      ; verifica se o asteroide colidiu com a nave
+	CMP R11, 1						  ; verifica se o asteroide colidiu com a nave
+	JZ  detetou_colisao_3_nave
 	CMP R10, 1					      
 	JZ  asteroide_tres
 	JMP ciclo_asteroide3			  ; se não colidiu volta para o ciclo para continuar a descer o asteróide
+
+
+detetou_colisao_3_nave: 
+	CALL push_function3
+	JMP asteroide_tres
 
 move_ast3:							  ; rotina responsável por mover o asteroide
 	CALL push_function3	
@@ -1064,6 +1108,7 @@ asteroide_quatro:
 	CALL escolhe_tipo_ast
 	MOV [asteroide4], R11			  ; guarda o sítio onde nasce o asteroide
 	MOV [asteroide4+2], R10		      ; guarda o tipo de asteroide
+	MOV [asteroide4+4], R11			  ; guarda o sítio onde nasce o asteroide (permanece igual até outro nascer)
 	MOV R8, LINHA_AST				  ; guarda NO R8 a linha que vai começar (linha 0 sempre)
 	CALL desenha_ast4
 	JMP ciclo_asteroide4
@@ -1103,9 +1148,17 @@ ciclo_asteroide4:
     JNZ ciclo_asteroide4              ; se não estiver volta ao ciclo
     CALL move_ast4					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo			      ; verifica se o asteroide chegou ao fim do ecrã
+	MOV R7, [asteroide4 + 4]
+	CALL verifica_colisoes			  ; verifica se o asteroide colidiu com a nave
+	CMP R11, 1						  ; verifica se o asteroide colidiu com a nave
+	JZ detetou_colisao_4_nave		  ; se colidiu vai para a rotina de colisão
 	CMP R10, 1
 	JZ  asteroide_quatro
 	JMP ciclo_asteroide4			  ; se não colidiu volta para o ciclo para continuar a descer o asteróide
+
+detetou_colisao_4_nave:
+	CALL push_function4
+	JMP asteroide_quatro
 
 move_ast4:							  ; rotina responsável por mover o asteroide
 	CALL push_function4		
@@ -1194,7 +1247,7 @@ ast_mineravel:
 	RET
 	
 verifica_fundo:
-	MOV R7, 32						  ; fundo da tela
+	MOV R7, ULTIMA_LINHA			  ; fundo da tela
 	CMP R8, R7						  ; verifica se chegou ao fim da tela
 	JZ chegou_ao_fundo				  ; se chegou ao fim volta a criar um asteroide aleatoriamente
 	MOV R10, 0
@@ -1203,6 +1256,64 @@ verifica_fundo:
 chegou_ao_fundo:
 	MOV R10, 1
 	RET
+
+
+
+; R7 guarda a posição do asteroide (1, 2, 3, 4 ou 5)
+; R1 guarda o tipo do asteroide (1, 2, 3 ou 4)
+; R11 guarda a posição do asteroide
+; R8 guarda a linha do asteroide
+
+verifica_colisoes:
+	PUSH R0
+	PUSH R1
+	PUSH R2
+	PUSH R3
+	PUSH R4
+	PUSH R5
+	PUSH R6
+	PUSH R7
+	PUSH R8
+	PUSH R9
+	PUSH R10
+
+escolhe_colisoes:
+	MOV R2, 2					; constante pra fazer o mod por 2
+	MOD R7, R2					; mod por 2				
+	CMP R7, 0					; se for zero (ast 0, 2 ou 4 --> podem bater na nave)
+	JNZ sem_hipotese			; não pode bater na nave
+	CALL verifica_colisao_nave
+
+fim_verificacao:
+	POP R10
+	POP R9
+	POP R8
+	POP R7
+	POP R6
+	POP R5
+	POP R4
+	POP R3
+	POP R2
+	POP R1
+	POP R0
+	; 		PODE POR-SE O VERIFICA FUNDO AQUI EM VEZ DA FUNÇÃO PRINCIPAL
+	RET
+
+sem_hipotese:
+	MOV R11, 0
+	JMP fim_verificacao
+
+verifica_colisao_nave:
+	MOV R2, COLISAO_NAVE
+	CMP R8, R2
+	JZ houve_colisao_nave
+	MOV R11, 0
+	RET
+	
+houve_colisao_nave:
+	MOV R11, 1
+	RET
+
 
 ; ******************************************************************************
 ; ********************************* SONDAS *************************************
