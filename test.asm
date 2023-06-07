@@ -777,22 +777,21 @@ sonda_central:
 	MOV R2, COLUNA_TIRO
 	MOV R4, DISPLAYS
 	MOV R5, R2
+	MOV R6, 1								  ; indica que a sonda ainda não chegou ao limite
 	MOV R9, LINHA_TIRO 
+    MOV R10, 0                                ; indica o quanto a coluna varia
 	MOV R11, [energia_total]
 	SUB R11, 5
 	MOV [energia_total], R11
 	CALL mostra_display
 	CALL desenha_tiro
-	MOV R6, 1
-	MOV [REPRODUZ], R6
-	MOV R1, -1								  ; o quanto as linhas vão variar
-	MOV R2, 0								  ; o quanto as colunas vão variar
-    MOV R6, 1								  ; indica que a sonda ainda não chegou ao limite
+	MOV R0, 1
+	MOV [REPRODUZ], R0
 
 ciclo_sonda:
-	MOV R4, [evento_int + 2]
-	MOV R10, [estado_jogo]
-	CMP R10, 1
+	MOV R1, [evento_int + 2]
+	MOV R11, [estado_jogo]
+	CMP R11, 1
 	JNZ ciclo_sonda
 	CALL verifica_limite
 	CMP R6, 0
@@ -805,24 +804,23 @@ PROCESS SP_inicial_sonda_esquerda
 sonda_esquerda:
 	MOV R0, [tecla_0_carregada]
 	MOV R4, DISPLAYS
+	MOV R6, 1                                   ; indica que a sonda ainda não chegou ao limite
 	MOV R9, LINHA_TIRO
 	MOV R2, COLUNA_ESQUERDA
 	MOV R5, R2
+    MOV R10, -1                                 ; indica o quanto a coluna varia
 	MOV R11, [energia_total]
 	SUB R11, 5
 	MOV [energia_total], R11
 	CALL mostra_display
 	CALL desenha_tiro
-	MOV R6, 1
-	MOV [REPRODUZ], R6
-	MOV R1, -1									; o quanto as linhas vão variar
-	MOV R2, -1									; o quanto as colunas vão variar
-    MOV R6, 1                                   ; indica que a sonda ainda não chegou ao limite
+	MOV R0, 1
+	MOV [REPRODUZ], R0
 
 ciclo_sonda_esquerda:
-	MOV R4, [evento_int + 2]
-	MOV R10, [estado_jogo]
-	CMP R10, 1
+	MOV R1, [evento_int + 2]
+	MOV R11, [estado_jogo]
+	CMP R11, 1
 	JNZ ciclo_sonda_esquerda
 	CALL verifica_limite
 	CMP R6, 0
@@ -835,24 +833,23 @@ PROCESS SP_inicial_sonda_direita
 sonda_direita:
 	MOV R0, [tecla_2_carregada]
 	MOV R4, DISPLAYS
+	MOV R6, 1									 ; indica que a sonda ainda não chegou ao limite
 	MOV R9, LINHA_TIRO
 	MOV R2, COLUNA_DIREITA
 	MOV R5, R2
+    MOV R10, 1                                   ; indica o quanto a coluna varia
 	MOV R11, [energia_total]
 	SUB R11, 5
 	MOV [energia_total], R11
 	CALL mostra_display
 	CALL desenha_tiro
-	MOV R6, 1
-	MOV [REPRODUZ], R6
-	MOV R1, -1									 ; o quanto as linhas vão variar
-	MOV R2, 1									 ; o quanto as colunas vão variar
-    MOV R6, 1									 ; indica que a sonda ainda não chegou ao limite
-
+	MOV R0, 1
+	MOV [REPRODUZ], R0
+	
 ciclo_sonda_direita:
-	MOV R4, [evento_int + 2]
-	MOV R10, [estado_jogo]
-	CMP R10, 1
+	MOV R0, [evento_int + 2]
+	MOV R11, [estado_jogo]
+	CMP R11, 1
 	JNZ ciclo_sonda_direita
 	CALL verifica_limite
 	CMP R6, 0
@@ -870,7 +867,6 @@ limite_maximo:
 	MOV R6, 0
 	CALL apaga_tiro
 	RET
-
 ; ******************************************************************************
 ; *********************************** TIRO *************************************
 ; ******************************************************************************
@@ -884,8 +880,8 @@ desenha_tiro:
 
 move_tiro:							  ; faz com o que o tiro suba no ecrã
 	CALL apaga_tiro
-	ADD R9, R1     			  		  ; muda o valor da linha do tiro
-	ADD R5, R2						  ; muda o valor da coluna do tiro
+	SUB R9, 1     			  		  ; muda o valor da linha do tiro
+    ADD R5, R10
 	CALL desenha_tiro
 	RET
 
