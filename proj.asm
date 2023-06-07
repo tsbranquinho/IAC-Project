@@ -165,13 +165,13 @@ estado_jogo:
 nave_atual:
 	WORD 0					  ; nave atual (0-7)
 
-sonda_esquerda:
+coord_sonda_esquerda:
 	WORD 0, 0, 0              ; sonda esquerda (linha, coluna, colisão)
 
-sonda_direita:
+coord_sonda_direita:
 	WORD 0, 0, 0              ; sonda direita (linha, coluna, colisão)
 
-sonda_central:
+coord_sonda_central:
 	WORD 0, 0, 0              ; sonda central (linha, coluna, colisão)
 
 asteroide1:
@@ -824,10 +824,10 @@ asteroide_um:
 	MOV [asteroide1+2], R10		      ; guarda o tipo de asteroide
 	MOV [asteroide1+4], R11			  ; guarda o sítio onde nasce o asteroide (permanece igual até outro nascer)
 	MOV R8, LINHA_AST				  ; guarda NO R8 a linha que vai começar (linha 0 sempre)
-	CALL desenha_ast1
+	CALL desenha_ast
 	JMP ciclo_asteroide1
 
-desenha_ast1:
+desenha_ast:
 	MOV R1, R8						  ; copia a linha do pixel de referência do asteroide
 	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
 	PUSH R1
@@ -839,13 +839,13 @@ desenha_ast1:
 	MOV R6, [R4]				      ; guarda no R6 a altura do asteróide
 	ADD R4, 2						  ; altera o R4 para guardar o endereço das cores do asteróide
 	
-ciclo_desenha_ast1:					  ; altera os valores para desenhar a próxima linha do asteroide
+ciclo_desenha_ast:					  ; altera os valores para desenhar a próxima linha do asteroide
 	CALL desenha_pixels
 	MOV R2, R9					  	  ; copia a coluna do pixel de referência do asteroide
 	MOV R5, LARGURA_AST				  ; repõe a largura do asteroide
 	ADD R1, 1						  ;	troca a linha em que se está a desenhar
 	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
-	JNZ ciclo_desenha_ast1			  ; repete o ciclo até desenhar todas as linhas do asteroide
+	JNZ ciclo_desenha_ast			  ; repete o ciclo até desenhar todas as linhas do asteroide
 	POP R6
 	POP R4
 	POP R2
@@ -860,7 +860,7 @@ ciclo_asteroide1:
 	MOV R10, 5						  ; definir que o asteroide está em andamento
 	MOV [asteroide1], R10			  ; guarda na memória o estado do asteroide
     JNZ ciclo_asteroide1              ; se não estiver volta ao ciclo
-    CALL move_ast1					  ; se estiver move o asteróide uma linha
+    CALL move_ast					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo				  ; verifica se chegou ao fundo da tela
 	MOV R7, [asteroide1 + 4]		  ; vai buscar o sítio onde nasceu o asteroide
 	CALL verifica_colisoes
@@ -871,17 +871,17 @@ ciclo_asteroide1:
 	JMP ciclo_asteroide1			  ; se não chegou fim volta para o ciclo para continuar a descer o asteróide
 
 detetou_colisao_1_nave:
-	CALL push_function1				  ; apaga o asteroide
+	CALL push_function				  ; apaga o asteroide
 	JMP asteroide_um				  ; volta a desenhar o asteroide
 
-move_ast1:							  ; rotina responsável por mover o asteroide
-	CALL push_function1		
+move_ast:							  ; rotina responsável por mover o asteroide
+	CALL push_function		
 	ADD R8, 1						  ; modifica a linha de referencia para o desenho do asteroide
 	ADD R9, R0						  ; modifica a coluna de referencia para o desenho do asteroide
-	CALL desenha_ast1
+	CALL desenha_ast
 	RET
 	
-push_function1:
+push_function:
 	PUSH R1
 	PUSH R2
 	PUSH R5
@@ -890,13 +890,13 @@ push_function1:
 	MOV  R1, R8						  ; copia a linha do pixel de referência do asteroide
 	MOV R6, ALTURA_AST
 
-apaga_ast1:
+apaga_ast:
 	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
 	MOV R5, LARGURA_AST				  ; largura do asteroide
 	CALL apaga_pixels
 	ADD R1, 1						  ;	troca a linha em que se está a desenhar
 	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
-	JNZ apaga_ast1				  	  ; repete até apagar todo o asteroide
+	JNZ apaga_ast				  	  ; repete até apagar todo o asteroide
 	POP R8
 	POP R6
 	POP R5
@@ -921,33 +921,33 @@ asteroide_dois:
 	MOV [asteroide2+2], R10		      ; guarda o tipo de asteroide
 	MOV [asteroide2+4], R11			  ; guarda o sítio onde nasce o asteroide (permanece igual até outro nascer)
 	MOV R8, LINHA_AST				  ; guarda NO R8 a linha que vai começar (linha 0 sempre)
-	CALL desenha_ast2
+	CALL desenha_ast
 	JMP ciclo_asteroide2
 
-desenha_ast2:
-	MOV R1, R8						  ; copia a linha do pixel de referência do asteroide
-	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
-	PUSH R1
-	PUSH R2
-	PUSH R4
-	PUSH R6
-	MOV R5, [R4]					  ; guarda em R5 a largura do asteróide
-	ADD R4, 2						  ; altera o R4 para guardar o endereço da altura do asteróide
-	MOV R6, [R4]				      ; guarda no R6 a altura do asteróide
-	ADD R4, 2						  ; altera o R4 para guardar o endereço das cores do asteróide
-	
-ciclo_desenha_ast2:					  ; altera os valores para desenhar a próxima linha do asteroide
-	CALL desenha_pixels
-	MOV R2, R9					  	  ; copia a coluna do pixel de referência do asteroide
-	MOV R5, LARGURA_AST				  ; repõe a largura do asteroide
-	ADD R1, 1						  ;	troca a linha em que se está a desenhar
-	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
-	JNZ ciclo_desenha_ast2			  ; repete o ciclo até desenhar todas as linhas do asteroide
-	POP R6
-	POP R4
-	POP R2
-	POP R1
-	RET								  ; volta quando terminou de desenhar o asteroide
+;desenha_ast2:
+;	MOV R1, R8						  ; copia a linha do pixel de referência do asteroide
+;	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
+;	PUSH R1
+;	PUSH R2
+;	PUSH R4
+;	PUSH R6
+;	MOV R5, [R4]					  ; guarda em R5 a largura do asteróide
+;	ADD R4, 2						  ; altera o R4 para guardar o endereço da altura do asteróide
+;	MOV R6, [R4]				      ; guarda no R6 a altura do asteróide
+;	ADD R4, 2						  ; altera o R4 para guardar o endereço das cores do asteróide
+;	
+;ciclo_desenha_ast2:					  ; altera os valores para desenhar a próxima linha do asteroide
+;	CALL desenha_pixels
+;	MOV R2, R9					  	  ; copia a coluna do pixel de referência do asteroide
+;	MOV R5, LARGURA_AST				  ; repõe a largura do asteroide
+;	ADD R1, 1						  ;	troca a linha em que se está a desenhar
+;	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
+;	JNZ ciclo_desenha_ast2			  ; repete o ciclo até desenhar todas as linhas do asteroide
+;	POP R6
+;	POP R4
+;	POP R2
+;	POP R1
+;	RET								  ; volta quando terminou de desenhar o asteroide
 
 ciclo_asteroide2:
     MOV R11, [evento_int]             ; espera a interrupção ativar
@@ -957,7 +957,7 @@ ciclo_asteroide2:
 	MOV R10, 5						  ; definir que o asteroide está em andamento
 	MOV [asteroide2], R10			  ; guarda na memória o estado do asteroide
     JNZ ciclo_asteroide2              ; se não estiver volta ao ciclo
-    CALL move_ast2					  ; se estiver move o asteróide uma linha
+    CALL move_ast					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo			      ; verifica se o asteroide chegou ao fim do ecrã
 	MOV R7, [asteroide2 + 4]		  ; obter posicao inicial do asteroide
 	CALL verifica_colisoes			  ; verifica se o asteroide colidiu com a nave
@@ -968,37 +968,37 @@ ciclo_asteroide2:
 	JMP ciclo_asteroide2			  ; se não colidiu volta para o ciclo para continuar a descer o asteróide
 
 detetou_colisao_2_nave:
-	CALL push_function2
+	CALL push_function
 	JMP asteroide_dois
 
-move_ast2:							  ; rotina responsável por mover o asteroide
-	CALL push_function2		
-	ADD R8, 1						  ; modifica a linha de referencia para o desenho do asteroide
-	ADD R9, R0						  ; modifica a coluna de referencia para o desenho do asteroide
-	CALL desenha_ast2
-	RET
-	
-push_function2:
-	PUSH R1
-	PUSH R2
-	PUSH R5
-	PUSH R6
-	PUSH R8
-	MOV  R1, R8						  ; copia a linha do pixel de referência do asteroide
-	MOV R6, ALTURA_AST
-apaga_ast2:
-	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
-	MOV R5, LARGURA_AST				  ; largura do asteroide
-	CALL apaga_pixels
-	ADD R1, 1						  ;	troca a linha em que se está a desenhar
-	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
-	JNZ apaga_ast2				  	  ; repete até apagar todo o asteroide
-	POP R8
-	POP R6
-	POP R5
-	POP R2
-	POP R1
-	RET								  ; volta quando terminou de desenhar o asteróide
+;move_ast2:							  ; rotina responsável por mover o asteroide
+;	CALL push_function2		
+;	ADD R8, 1						  ; modifica a linha de referencia para o desenho do asteroide
+;	ADD R9, R0						  ; modifica a coluna de referencia para o desenho do asteroide
+;	CALL desenha_ast2
+;	RET
+;	
+;push_function2:
+;	PUSH R1
+;	PUSH R2
+;	PUSH R5
+;	PUSH R6
+;	PUSH R8
+;	MOV  R1, R8						  ; copia a linha do pixel de referência do asteroide
+;	MOV R6, ALTURA_AST
+;apaga_ast2:
+;	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
+;	MOV R5, LARGURA_AST				  ; largura do asteroide
+;	CALL apaga_pixels
+;	ADD R1, 1						  ;	troca a linha em que se está a desenhar
+;	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
+;	JNZ apaga_ast2				  	  ; repete até apagar todo o asteroide
+;	POP R8
+;	POP R6
+;	POP R5
+;	POP R2
+;	POP R1
+;	RET								  ; volta quando terminou de desenhar o asteróide
 
 
 
@@ -1015,34 +1015,34 @@ asteroide_tres:
 	MOV [asteroide3+2], R10		      ; guarda o tipo de asteroide
 	MOV [asteroide3+4], R11			  ; guarda o sítio onde nasce o asteroide (permanece igual até outro nascer)
 	MOV R8, LINHA_AST				  ; guarda NO R8 a linha que vai começar (linha 0 sempre)
-	CALL desenha_ast3
+	CALL desenha_ast
 	JMP ciclo_asteroide3
 
-desenha_ast3:
-	MOV R1, R8						  ; copia a linha do pixel de referência do asteroide
-	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
-	PUSH R1
-	PUSH R2
-	PUSH R4
-	PUSH R6
-	MOV R5, [R4]					  ; guarda em R5 a largura do asteróide
-	ADD R4, 2						  ; altera o R4 para guardar o endereço da altura do asteróide
-	MOV R6, [R4]				      ; guarda no R6 a altura do asteróide
-	ADD R4, 2						  ; altera o R4 para guardar o endereço das cores do asteróide
-	
-
-ciclo_desenha_ast3:					  ; altera os valores para desenhar a próxima linha do asteroide
-	CALL desenha_pixels
-	MOV R2, R9					  	  ; copia a coluna do pixel de referência do asteroide
-	MOV R5, LARGURA_AST				  ; repõe a largura do asteroide
-	ADD R1, 1						  ;	troca a linha em que se está a desenhar
-	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
-	JNZ ciclo_desenha_ast3			  ; repete o ciclo até desenhar todas as linhas do asteroide
-	POP R6
-	POP R4
-	POP R2
-	POP R1
-	RET								  ; volta quando terminou de desenhar o asteroide
+;desenha_ast3:
+;	MOV R1, R8						  ; copia a linha do pixel de referência do asteroide
+;	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
+;	PUSH R1
+;	PUSH R2
+;	PUSH R4
+;	PUSH R6
+;	MOV R5, [R4]					  ; guarda em R5 a largura do asteróide
+;	ADD R4, 2						  ; altera o R4 para guardar o endereço da altura do asteróide
+;	MOV R6, [R4]				      ; guarda no R6 a altura do asteróide
+;	ADD R4, 2						  ; altera o R4 para guardar o endereço das cores do asteróide
+;	
+;
+;ciclo_desenha_ast3:					  ; altera os valores para desenhar a próxima linha do asteroide
+;	CALL desenha_pixels
+;	MOV R2, R9					  	  ; copia a coluna do pixel de referência do asteroide
+;	MOV R5, LARGURA_AST				  ; repõe a largura do asteroide
+;	ADD R1, 1						  ;	troca a linha em que se está a desenhar
+;	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
+;	JNZ ciclo_desenha_ast3			  ; repete o ciclo até desenhar todas as linhas do asteroide
+;	POP R6
+;	POP R4
+;	POP R2
+;	POP R1
+;	RET								  ; volta quando terminou de desenhar o asteroide
 
 ciclo_asteroide3:
     MOV R11, [evento_int]             ; espera a interrupção ativar
@@ -1052,7 +1052,7 @@ ciclo_asteroide3:
 	MOV R10, 5						  ; definir que o asteroide está em andamento
 	MOV [asteroide3], R10			  ; guarda na memória o estado do asteroide
     JNZ ciclo_asteroide3              ; se não estiver volta ao ciclo
-    CALL move_ast3					  ; se estiver move o asteróide uma linha
+    CALL move_ast					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo			      ; verifica se o asteroide chegou ao fim do ecrã
 	MOV R7, [asteroide3 + 4]
 	CALL verifica_colisoes		      ; verifica se o asteroide colidiu com a nave
@@ -1064,37 +1064,37 @@ ciclo_asteroide3:
 
 
 detetou_colisao_3_nave: 
-	CALL push_function3
+	CALL push_function
 	JMP asteroide_tres
-
-move_ast3:							  ; rotina responsável por mover o asteroide
-	CALL push_function3	
-	ADD R8, 1						  ; modifica a linha de referencia para o desenho do asteroide
-	ADD R9, R0						  ; modifica a coluna de referencia para o desenho do asteroide
-	CALL desenha_ast3
-	RET
-	
-push_function3:
-	PUSH R1
-	PUSH R2
-	PUSH R5
-	PUSH R6
-	PUSH R8
-	MOV  R1, R8						  ; copia a linha do pixel de referência do asteroide
-	MOV R6, ALTURA_AST
-apaga_ast3:
-	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
-	MOV R5, LARGURA_AST				  ; largura do asteroide
-	CALL apaga_pixels
-	ADD R1, 1						  ;	troca a linha em que se está a desenhar
-	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
-	JNZ apaga_ast3				  	  ; repete até apagar todo o asteroide
-	POP R8
-	POP R6
-	POP R5
-	POP R2
-	POP R1
-	RET								  ; volta quando terminou de desenhar o asteróide
+;
+;move_ast3:							  ; rotina responsável por mover o asteroide
+;	CALL push_function3	
+;	ADD R8, 1						  ; modifica a linha de referencia para o desenho do asteroide
+;	ADD R9, R0						  ; modifica a coluna de referencia para o desenho do asteroide
+;	CALL desenha_ast3
+;	RET
+;	
+;push_function3:
+;	PUSH R1
+;	PUSH R2
+;	PUSH R5
+;	PUSH R6
+;	PUSH R8
+;	MOV  R1, R8						  ; copia a linha do pixel de referência do asteroide
+;	MOV R6, ALTURA_AST
+;apaga_ast3:
+;	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
+;	MOV R5, LARGURA_AST				  ; largura do asteroide
+;	CALL apaga_pixels
+;	ADD R1, 1						  ;	troca a linha em que se está a desenhar
+;	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
+;	JNZ apaga_ast3				  	  ; repete até apagar todo o asteroide
+;	POP R8
+;	POP R6
+;	POP R5
+;	POP R2
+;	POP R1
+;	RET								  ; volta quando terminou de desenhar o asteróide
 
 PROCESS SP_inicial_ast4         	  ; indicação do início do processo do asteroide 4
 
@@ -1110,33 +1110,33 @@ asteroide_quatro:
 	MOV [asteroide4+2], R10		      ; guarda o tipo de asteroide
 	MOV [asteroide4+4], R11			  ; guarda o sítio onde nasce o asteroide (permanece igual até outro nascer)
 	MOV R8, LINHA_AST				  ; guarda NO R8 a linha que vai começar (linha 0 sempre)
-	CALL desenha_ast4
+	CALL desenha_ast
 	JMP ciclo_asteroide4
 
-desenha_ast4:
-	MOV R1, R8						  ; copia a linha do pixel de referência do asteroide
-	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
-	PUSH R1
-	PUSH R2
-	PUSH R4
-	PUSH R6
-	MOV R5, [R4]					  ; guarda em R5 a largura do asteróide
-	ADD R4, 2						  ; altera o R4 para guardar o endereço da altura do asteróide
-	MOV R6, [R4]				      ; guarda no R6 a altura do asteróide
-	ADD R4, 2						  ; altera o R4 para guardar o endereço das cores do asteróide
-	
-ciclo_desenha_ast4:					  ; altera os valores para desenhar a próxima linha do asteroide
-	CALL desenha_pixels
-	MOV R2, R9					  	  ; copia a coluna do pixel de referência do asteroide
-	MOV R5, LARGURA_AST				  ; repõe a largura do asteroide
-	ADD R1, 1						  ;	troca a linha em que se está a desenhar
-	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
-	JNZ ciclo_desenha_ast4			  ; repete o ciclo até desenhar todas as linhas do asteroide
-	POP R6
-	POP R4
-	POP R2
-	POP R1
-	RET								  ; volta quando terminou de desenhar o asteroide
+;desenha_ast4:
+;	MOV R1, R8						  ; copia a linha do pixel de referência do asteroide
+;	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
+;	PUSH R1
+;	PUSH R2
+;	PUSH R4
+;	PUSH R6
+;	MOV R5, [R4]					  ; guarda em R5 a largura do asteróide
+;	ADD R4, 2						  ; altera o R4 para guardar o endereço da altura do asteróide
+;	MOV R6, [R4]				      ; guarda no R6 a altura do asteróide
+;	ADD R4, 2						  ; altera o R4 para guardar o endereço das cores do asteróide
+;	
+;ciclo_desenha_ast4:					  ; altera os valores para desenhar a próxima linha do asteroide
+;	CALL desenha_pixels
+;	MOV R2, R9					  	  ; copia a coluna do pixel de referência do asteroide
+;	MOV R5, LARGURA_AST				  ; repõe a largura do asteroide
+;	ADD R1, 1						  ;	troca a linha em que se está a desenhar
+;	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
+;	JNZ ciclo_desenha_ast4			  ; repete o ciclo até desenhar todas as linhas do asteroide
+;	POP R6
+;	POP R4
+;	POP R2
+;	POP R1
+;	RET								  ; volta quando terminou de desenhar o asteroide
 
 ciclo_asteroide4:
     MOV R11, [evento_int]             ; espera a interrupção ativar
@@ -1146,7 +1146,7 @@ ciclo_asteroide4:
 	MOV R10, 5						  ; definir que o asteroide está em andamento
 	MOV [asteroide4], R10			  ; guarda na memória o estado do asteroide
     JNZ ciclo_asteroide4              ; se não estiver volta ao ciclo
-    CALL move_ast4					  ; se estiver move o asteróide uma linha
+    CALL move_ast					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo			      ; verifica se o asteroide chegou ao fim do ecrã
 	MOV R7, [asteroide4 + 4]
 	CALL verifica_colisoes			  ; verifica se o asteroide colidiu com a nave
@@ -1157,39 +1157,37 @@ ciclo_asteroide4:
 	JMP ciclo_asteroide4			  ; se não colidiu volta para o ciclo para continuar a descer o asteróide
 
 detetou_colisao_4_nave:
-	CALL push_function4
+	CALL push_function
 	JMP asteroide_quatro
 
-move_ast4:							  ; rotina responsável por mover o asteroide
-	CALL push_function4		
-	ADD R8, 1						  ; modifica a linha de referencia para o desenho do asteroide
-	ADD R9, R0						  ; modifica a coluna de referencia para o desenho do asteroide
-	CALL desenha_ast4
-	RET
-	
-push_function4:
-	PUSH R1
-	PUSH R2
-	PUSH R5
-	PUSH R6
-	PUSH R8
-	MOV  R1, R8						  ; copia a linha do pixel de referência do asteroide
-	MOV R6, ALTURA_AST
-apaga_ast4:
-	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
-	MOV R5, LARGURA_AST				  ; largura do asteroide
-	CALL apaga_pixels
-	ADD R1, 1						  ;	troca a linha em que se está a desenhar
-	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
-	JNZ apaga_ast4				  	  ; repete até apagar todo o asteroide
-	POP R8
-	POP R6
-	POP R5
-	POP R2
-	POP R1
-	RET								  ; volta quando terminou de desenhar o asteróide
-
-
+;move_ast4:							  ; rotina responsável por mover o asteroide
+;	CALL push_function4		
+;	ADD R8, 1						  ; modifica a linha de referencia para o desenho do asteroide
+;	ADD R9, R0						  ; modifica a coluna de referencia para o desenho do asteroide
+;	CALL desenha_ast4
+;	RET
+;	
+;push_function4:
+;	PUSH R1
+;	PUSH R2
+;	PUSH R5
+;	PUSH R6
+;	PUSH R8
+;	MOV  R1, R8						  ; copia a linha do pixel de referência do asteroide
+;	MOV R6, ALTURA_AST
+;apaga_ast4:
+;	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
+;	MOV R5, LARGURA_AST				  ; largura do asteroide
+;	CALL apaga_pixels
+;	ADD R1, 1						  ;	troca a linha em que se está a desenhar
+;	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
+;	JNZ apaga_ast4				  	  ; repete até apagar todo o asteroide
+;	POP R8
+;	POP R6
+;	POP R5
+;	POP R2
+;	POP R1
+;	RET								  ; volta quando terminou de desenhar o asteróide
 
 
 escolhe_asteroide:	
