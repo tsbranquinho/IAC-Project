@@ -31,7 +31,8 @@ ULTIMA_LINHA EQU 32
 TECLA_C    	 EQU 0CH
 TECLA_D      EQU 0DH
 MASCARA      EQU 0FH     							; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
-MASCARA_2    EQU 00FFH
+MASCARA_2    EQU 00FFH						        ; para isolar os 8 bits de menor peso, para a aleatoriedade
+MASCARA_3    EQU 0003H                              ; para isolar os 2 bits de menor peso, para as colisões
 
 COMANDOS				EQU	6000H				; endereço de base dos comandos do MediaCenter
 
@@ -199,7 +200,7 @@ DEF_NAVE_0:					  ; tabela que define o boneco (cor, largura, pixels)
 	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
 	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, ROXO, AZUL_CLARO, PRETO, VERDE_CLARO, BRANCO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
 	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, VERMELHO, AMARELO, PRETO, LARANJA, ROSA, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
-	WORD		PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO
+	WORD		PRETO, AMARELO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AMARELO, PRETO
 	WORD		PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO
 
 DEF_NAVE_1:
@@ -207,7 +208,7 @@ DEF_NAVE_1:
 	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
 	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AMARELO, VERDE_CLARO, PRETO, BRANCO, ROXO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
 	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, VERMELHO, LARANJA, PRETO, ROSA, AZUL_CLARO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
-	WORD 		PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO
+	WORD 		PRETO, BRANCO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, BRANCO, PRETO
 	WORD 		PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO
 
 DEF_NAVE_2:
@@ -215,7 +216,7 @@ DEF_NAVE_2:
 	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
 	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, ROSA, BRANCO, PRETO, LARANJA, AZUL_CLARO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
 	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, VERDE_CLARO, AMARELO, PRETO, VERMELHO, ROXO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
-	WORD 		PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO
+	WORD 		PRETO, AMARELO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AMARELO, PRETO
 	WORD 		PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO
 
 DEF_NAVE_3:
@@ -223,7 +224,7 @@ DEF_NAVE_3:
 	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
 	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, LARANJA, VERMELHO, PRETO, BRANCO, AZUL_CLARO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
 	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AMARELO, VERDE_CLARO, PRETO, ROSA, ROXO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
-	WORD 		PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO
+	WORD 		PRETO, BRANCO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, BRANCO, PRETO
 	WORD 		PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO
 
 DEF_NAVE_4:
@@ -231,7 +232,7 @@ DEF_NAVE_4:
 	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
 	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, VERDE_CLARO, AMARELO, PRETO, BRANCO, AZUL_CLARO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
 	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, ROXO, AZUL_CLARO, PRETO, LARANJA, VERMELHO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
-	WORD 		PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO
+	WORD 		PRETO, AMARELO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AMARELO, PRETO
 	WORD 		PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO
 
 DEF_NAVE_5:
@@ -239,7 +240,7 @@ DEF_NAVE_5:
 	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
 	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AMARELO, LARANJA, PRETO, BRANCO, AZUL_CLARO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
 	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, VERDE_CLARO, VERMELHO, PRETO, ROSA, ROXO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
-	WORD 		PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO
+	WORD 		PRETO, BRANCO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, BRANCO, PRETO
 	WORD 		PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO
 
 DEF_NAVE_6:
@@ -247,7 +248,7 @@ DEF_NAVE_6:
 	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
 	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, BRANCO, VERMELHO, PRETO, LARANJA, AMARELO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
 	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, VERDE_CLARO, AZUL_CLARO, PRETO, ROSA, ROXO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
-	WORD 		PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO
+	WORD 		PRETO, AMARELO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AMARELO, PRETO
 	WORD 		PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO
 
 DEF_NAVE_7:
@@ -255,7 +256,7 @@ DEF_NAVE_7:
 	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
 	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, ROXO, AMARELO, PRETO, LARANJA, VERMELHO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
 	WORD 		PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, VERDE_CLARO, BRANCO, PRETO, AZUL_CLARO, ROSA, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO
-	WORD 		PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO
+	WORD 		PRETO, BRANCO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, BRANCO, PRETO
 	WORD 		PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO
 
 	
@@ -510,16 +511,25 @@ teclado:
     MOV  R2, TEC_LIN   				  ; endereço do periférico das linhas
     MOV  R3, TEC_COL   				  ; endereço do periférico das colunas~
 
+reseta_r1:
+	MOV R1, 1
+	JMP espera_tecla
+
+rol_r1:
+	ROL R1, 1
+	MOV R11, 10H
+	CMP R1, R11
+	JZ  reseta_r1
+
 espera_tecla:          			  	  ; neste ciclo espera-se até uma tecla ser premida
 
-	YIELD                             ; ciclo potencialmente bloqueante
-	
-    ROL R1, 1				  
+	WAIT                              ; ciclo potencialmente bloqueante
+				  
     MOVB [R2], R1      				  ; escrever no periférico de saída (linhas)
     MOVB R0, [R3]      				  ; ler do periférico de entrada (colunas)
     AND  R0, R5        				  ; elimina bits para além dos bits 0-3
     CMP  R0, ZERO       			  ; há tecla premida?
-    JZ   espera_tecla  				  ; se nenhuma tecla premida, repete
+    JZ   rol_r1  				      ; se nenhuma tecla premida, repete
 									  ; vai mostrar a linha e a coluna da tecla
 				  
 	CALL converte_valor				  ; converte o valor da linha e guarda no R7
@@ -838,9 +848,12 @@ ciclo_asteroide1:
     CALL move_ast					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo				  ; verifica se chegou ao fundo da tela
 	MOV R7, [asteroide1 + 4]		  ; vai buscar o sítio onde nasceu o asteroide
-	CALL verifica_colisoes
+	CALL verifica_colisoes_nave
 	CMP R11, 1						  ; verifica se houve colisão com a nave
-	JZ 	detetou_colisao_1_nave  	      ; se houver colisão volta a desenhar o asteroide
+	JZ 	detetou_colisao_1_nave  	  ; se houver colisão volta a desenhar o asteroide
+	CALL verifica_colisoes_sonda	  ; verifica se houve colisão com a sonda
+	CMP R11, 1						  ; verifica se houve colisão com a sonda
+	JZ 	detetou_colisao_1_nave  	  ; se houver colisão volta a desenhar o asteroide
 	CMP R10, 1						  ; chegar ao fundo (valor 1)
 	JZ  asteroide_um				  ; se chegou ao fundo
 	JMP ciclo_asteroide1			  ; se não chegou fim volta para o ciclo para continuar a descer o asteróide
@@ -878,9 +891,12 @@ ciclo_asteroide2:
     CALL move_ast					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo			      ; verifica se o asteroide chegou ao fim do ecrã
 	MOV R7, [asteroide2 + 4]		  ; obter posicao inicial do asteroide
-	CALL verifica_colisoes			  ; verifica se o asteroide colidiu com a nave
+	CALL verifica_colisoes_nave			  ; verifica se o asteroide colidiu com a nave
 	CMP R11, 1						  ; verifica se o asteroide colidiu com a nave
 	JZ  detetou_colisao_2_nave	      ; se colidiu volta para o ciclo para criar o asteroide
+	CALL verifica_colisoes_sonda	  ; verifica se houve colisão com a sonda
+	CMP R11, 1						  ; verifica se houve colisão com a sonda
+	JZ 	detetou_colisao_2_nave  	  ; se houver colisão volta a desenhar o asteroide
 	CMP R10, 1					      ; 
 	JZ  asteroide_dois
 	JMP ciclo_asteroide2			  ; se não colidiu volta para o ciclo para continuar a descer o asteróide
@@ -917,9 +933,12 @@ ciclo_asteroide3:
     CALL move_ast					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo			      ; verifica se o asteroide chegou ao fim do ecrã
 	MOV R7, [asteroide3 + 4]
-	CALL verifica_colisoes		      ; verifica se o asteroide colidiu com a nave
+	CALL verifica_colisoes_nave		      ; verifica se o asteroide colidiu com a nave
 	CMP R11, 1						  ; verifica se o asteroide colidiu com a nave
 	JZ  detetou_colisao_3_nave
+	CALL verifica_colisoes_sonda	  ; verifica se houve colisão com a sonda
+	CMP R11, 1						  ; verifica se houve colisão com a sonda
+	JZ 	detetou_colisao_3_nave  	  ; se houver colisão volta a desenhar o asteroide
 	CMP R10, 1					      
 	JZ  asteroide_tres
 	JMP ciclo_asteroide3			  ; se não colidiu volta para o ciclo para continuar a descer o asteróide
@@ -958,9 +977,12 @@ ciclo_asteroide4:
     CALL move_ast					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo			      ; verifica se o asteroide chegou ao fim do ecrã
 	MOV R7, [asteroide4 + 4]
-	CALL verifica_colisoes			  ; verifica se o asteroide colidiu com a nave
+	CALL verifica_colisoes_nave			  ; verifica se o asteroide colidiu com a nave
 	CMP R11, 1						  ; verifica se o asteroide colidiu com a nave
 	JZ detetou_colisao_4_nave		  ; se colidiu vai para a rotina de colisão
+	CALL verifica_colisoes_sonda	  ; verifica se houve colisão com a sonda
+	CMP R11, 1						  ; verifica se houve colisão com a sonda
+	JZ 	detetou_colisao_4_nave  	  ; se houver colisão volta a desenhar o asteroide
 	CMP R10, 1
 	JZ  asteroide_quatro
 	JMP ciclo_asteroide4			  ; se não colidiu volta para o ciclo para continuar a descer o asteróide
@@ -1047,8 +1069,8 @@ valores_ast_0:
 	MOV R0, 1
 	RET
 
-valores_ast_4:
-	MOV R9, COL_AST_DIR
+valores_ast_1:
+	MOV R9, COL_AST_MEIO
 	MOV R0, -1
 	RET
 
@@ -1062,8 +1084,8 @@ valores_ast_3:
 	MOV R0, 1
 	RET
 
-valores_ast_1:
-	MOV R9, COL_AST_MEIO
+valores_ast_4:
+	MOV R9, COL_AST_DIR
 	MOV R0, -1
 	RET
 
@@ -1096,7 +1118,7 @@ chegou_ao_fundo:
 ; R11 guarda a posição do asteroide
 ; R8 guarda a linha do asteroide
 
-verifica_colisoes:
+verifica_colisoes_nave:
 	PUSH R0
 	PUSH R1
 	PUSH R2
@@ -1146,6 +1168,129 @@ houve_colisao_nave:
 	MOV R11, 1
 	RET
 
+verifica_colisoes_sonda:
+	PUSH R0
+	PUSH R1
+	PUSH R2
+	PUSH R3
+	PUSH R4
+	PUSH R5
+	PUSH R6
+	PUSH R7
+	PUSH R8
+	PUSH R9
+	PUSH R10
+
+escolhe_colisoes_sonda:
+	CALL colisao_sonda_central
+	CMP R4, 1                          ; não precisa de verificar as outras
+	JZ fim_verificacao_sonda
+	CALL colisao_sonda_esquerda
+	CMP R4, 1                          ; não precisa de verificar as outras
+	JZ fim_verificacao_sonda
+	CALL colisao_sonda_direita
+	JMP fim_verificacao_sonda
+
+colisao_sonda_central:
+	MOV R5, R7					; copia a posição inicial do asteroide
+	CMP R5, 2					; se for zero (ast 2 --> pode bater na sonda central)
+	JZ  verifica_central
+	MOV R3, coord_sonda_central
+	JMP sem_colisao_sonda
+
+verifica_central:
+	MOV R1, [coord_sonda_central]      ; linha da sonda central
+	MOV R2, [coord_sonda_central + 2]  ; coluna da sonda central
+	MOV R3, coord_sonda_central        ; endereço da sonda central
+	MOV R6, R8						   ; copia a linha de referência do asteroide
+	ADD R8, ALTURA_AST				   ; parte inferior do asteroide
+	SUB R8, 1						   ; verdadeira parte inferior do asteroide
+	CMP R1, R8
+	JGT sem_colisao_sonda
+	CALL comparacao_superior
+	CMP R2, R9
+	JGE comparacao_a_direita
+	JMP sem_colisao_sonda
+
+colisao_sonda_esquerda:
+	MOV R5, R7					        ; copia a posição inicial do asteroide	
+	SHR R5, 1                           ; divide por dois (garante que 2, 3, 4 vão dar sempre >= 1)
+	CMP R5, 0						    ; se for zero (ast 0 ou 1 --> podem bater na sonda esquerda)
+	JZ  verifica_esquerda
+	MOV R3, coord_sonda_esquerda
+	JMP sem_colisao_sonda
+
+verifica_esquerda:
+	MOV R1, [coord_sonda_esquerda]      ; linha da sonda esquerda
+	MOV R2, [coord_sonda_esquerda + 2]  ; coluna da sonda esquerda
+	MOV R3, coord_sonda_esquerda        ; endereço da sonda esquerda
+	MOV R6, R8
+	ADD R8, ALTURA_AST				   ; parte inferior do asteroide
+	SUB R8, 1						   ; verdadeira parte inferior do asteroide
+	CMP R1, R8
+	JGT sem_colisao_sonda
+	CALL comparacao_superior
+	CMP R2, R9
+	JGE comparacao_a_direita
+	JMP sem_colisao_sonda
+
+colisao_sonda_direita:
+	MOV R5, R7					        ; copia a posição inicial do asteroide
+	MOV R2, 3					        ; constante pra fazer a divisão por 3
+	DIV R5, R2					        ; divide por 3
+	CMP R5, 1						    ; se for zero (ast 3 ou 4 --> podem bater na sonda direita)
+	JZ verifica_direita
+	MOV R3, coord_sonda_direita
+	JMP sem_colisao_sonda
+
+verifica_direita:
+	MOV R1, [coord_sonda_direita]      ; linha da sonda esquerda
+	MOV R2, [coord_sonda_direita + 2]  ; coluna da sonda esquerda
+	MOV R3, coord_sonda_direita       ; endereço da sonda esquerda
+	MOV R6, R8
+	ADD R8, ALTURA_AST				   ; parte inferior do asteroide
+	SUB R8, 1						   ; verdadeira parte inferior do asteroide
+	CMP R1, R8
+	JGT sem_colisao_sonda
+	CALL comparacao_superior
+	CMP R2, R9
+	JGE comparacao_a_direita
+	JMP sem_colisao_sonda
+
+comparacao_superior:
+	CMP R1, R6
+	JLT sem_colisao_sonda
+	RET
+
+comparacao_a_direita:
+	ADD R9, LARGURA_AST                 ; de forma a obter coluna da direita do asteróide
+	SUB R9, 1							; verdadeira coluna da direita do asteróide
+	CMP R2, R9
+	JLE houve_colisao
+	JMP sem_colisao_sonda
+
+houve_colisao:
+	MOV R11, 1
+	MOV [R3 + 4], R11					; indicar à sonda que houve colisão
+	MOV R4, 1						    ; não precisa de verificar as outras
+	RET
+
+sem_colisao_sonda:
+	RET
+
+fim_verificacao_sonda:
+	POP R10
+	POP R9
+	POP R8
+	POP R7
+	POP R6
+	POP R5
+	POP R4
+	POP R3
+	POP R2
+	POP R1
+	POP R0
+	RET
 
 ; ******************************************************************************
 ; ********************************* SONDAS *************************************
@@ -1160,7 +1305,10 @@ sonda_central:
 	MOV R5, R2
 	MOV R6, 1								  ; indica que a sonda ainda não chegou ao limite
 	MOV R9, LINHA_TIRO 
+	MOV [coord_sonda_central], R9			  ; guarda a linha da sonda central
+	MOV [coord_sonda_central + 2], R2		  ; guarda a coluna da sonda central
 	MOV R10, 0                                ; indica o quanto a coluna varia
+	MOV [coord_sonda_central + 4], R10		  ; sonda não colidiu
 	MOV R11, [energia_total]
 	SUB R11, 5
 	MOV [energia_total], R11
@@ -1168,6 +1316,7 @@ sonda_central:
 	CALL desenha_tiro
 	MOV R0, 1
 	MOV [REPRODUZ], R0
+	MOV R7, coord_sonda_central			   ; guarda na memória os dados da sonda central
 
 ciclo_sonda:
 	MOV R1, [evento_int + 2]
@@ -1177,7 +1326,12 @@ ciclo_sonda:
 	CALL verifica_limite
 	CMP R6, 0
 	JZ sonda_central
+	CALL verifica_colisao_sonda
+	CMP R11, 0
+	JZ  sonda_central
 	CALL move_tiro
+	MOV [coord_sonda_central], R9			   ; atualiza a linha da sonda central
+	MOV [coord_sonda_central + 2], R2	       ; atualiza a coluna da sonda central
 	JMP ciclo_sonda
 
 PROCESS SP_inicial_sonda_esquerda
@@ -1187,7 +1341,11 @@ sonda_esquerda:
 	MOV R4, DISPLAYS
 	MOV R6, 1                                   ; indica que a sonda ainda não chegou ao limite
 	MOV R9, LINHA_TIRO
+	MOV [coord_sonda_esquerda], R9				; guarda a linha da sonda
 	MOV R2, COLUNA_ESQUERDA
+	MOV [coord_sonda_esquerda + 2], R2			; guarda a coluna da sonda
+	MOV R10, 0
+	MOV [coord_sonda_esquerda + 4], R10			; sonda não colidiu
 	MOV R5, R2
 	MOV R10, -1                                 ; indica o quanto a coluna varia
 	MOV R11, [energia_total]
@@ -1197,6 +1355,7 @@ sonda_esquerda:
 	CALL desenha_tiro
 	MOV R0, 1
 	MOV [REPRODUZ], R0
+	MOV R7, coord_sonda_esquerda                ; guarda o endereço dos dados da sonda esquerda
 
 ciclo_sonda_esquerda:
 	MOV R1, [evento_int + 2]
@@ -1206,7 +1365,12 @@ ciclo_sonda_esquerda:
 	CALL verifica_limite
 	CMP R6, 0
 	JZ sonda_esquerda
+	CALL verifica_colisao_sonda
+	CMP R11, 0
+	JZ  sonda_esquerda
 	CALL move_tiro
+	MOV [coord_sonda_esquerda], R9               ; atualiza a linha atual da sonda
+	MOV [coord_sonda_esquerda + 2], R2			 ; atualiza a coluna atual da sonda
 	JMP ciclo_sonda_esquerda
 
 PROCESS SP_inicial_sonda_direita
@@ -1216,7 +1380,11 @@ sonda_direita:
 	MOV R4, DISPLAYS
 	MOV R6, 1									 ; indica que a sonda ainda não chegou ao limite
 	MOV R9, LINHA_TIRO
+	MOV [coord_sonda_direita], R9				 ; guarda a linha da sonda
 	MOV R2, COLUNA_DIREITA
+	MOV [coord_sonda_direita + 2], R2			 ; guarda a coluna da sonda
+	MOV R10, 0
+	MOV [coord_sonda_direita + 4], R10             ; sonda não colidiu
 	MOV R5, R2
 	MOV R10, 1									 ; indica o quanto a coluna varia 
 	MOV R11, [energia_total]
@@ -1226,16 +1394,22 @@ sonda_direita:
 	CALL desenha_tiro
 	MOV R0, 1
 	MOV [REPRODUZ], R0
+	MOV R7, coord_sonda_direita                ; guarda o endereço dos dados da sonda direita
 	
 ciclo_sonda_direita:
-	MOV R0, [evento_int + 2]
+	MOV R1, [evento_int + 2]
 	MOV R11, [estado_jogo]
 	CMP R11, 1
 	JNZ ciclo_sonda_direita
 	CALL verifica_limite
 	CMP R6, 0
 	JZ sonda_direita
+	CALL verifica_colisao_sonda
+	CMP R11, 0
+	JZ  sonda_direita
 	CALL move_tiro
+	MOV [coord_sonda_direita], R9               ; atualiza a linha atual da sonda
+	MOV [coord_sonda_direita + 2], R2			 ; atualiza a coluna atual da sonda
 	JMP ciclo_sonda_direita
 	
 verifica_limite:
@@ -1246,7 +1420,26 @@ verifica_limite:
 	
 limite_maximo:
 	MOV R6, 0
+	MOV [R7], R6					 ; resetar na memória a linha da sonda
+	MOV [R7 + 2], R6				 ; resetar na memória a coluna da sonda
+	MOV [R7 + 4], R6				 ; resetar também a colisão
 	CALL apaga_tiro
+	RET
+
+verifica_colisao_sonda:
+	MOV R0, [R7 + 4]; valor da memória associado à colisão da sonda central
+	CMP R0, 1						 ; determinar se houve colisão
+	JZ apagar_sonda					 ; se sim, apagar a sonda
+	RET
+
+apagar_sonda:
+	CALL apaga_tiro
+	MOV  R1, 0						 ; resetar na memória a linha da sonda
+	MOV  R2, 0						 ; resetar na memória a coluna da sonda
+	MOV  [R7], R1
+	MOV  [R7 + 2], R2
+	MOV  [R7 + 4], R2				 ; resetar também a colisão
+	MOV  R11, 0						 ; indicar à sonda para não se desenhar outra vez
 	RET
 
 ; ******************************************************************************
