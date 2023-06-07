@@ -845,10 +845,10 @@ ciclo_asteroide1:
 	MOV [asteroide1], R10			  ; guarda na memória o estado do asteroide
     JNZ ciclo_asteroide1              ; se não estiver volta ao ciclo
     CALL move_ast1					  ; se estiver move o asteróide uma linha
-	;MOV R7, 32
-	;CMP R8, R7
-	;JNZ asteroide_um
-	JMP ciclo_asteroide1			  ; se não colidiu volta para o ciclo para continuar a descer o asteróide
+	CALL verifica_fundo				  ; verifica se chegou ao fundo da tela
+	CMP R10, 1						  ; chegar ao fundo (valor 1)
+	JZ  asteroide_um				  ; se chegou ao fundo
+	JMP ciclo_asteroide1			  ; se não chegou fim volta para o ciclo para continuar a descer o asteróide
 
 move_ast1:							  ; rotina responsável por mover o asteroide
 	CALL push_function1		
@@ -932,6 +932,9 @@ ciclo_asteroide2:
 	MOV [asteroide2], R10			  ; guarda na memória o estado do asteroide
     JNZ ciclo_asteroide2              ; se não estiver volta ao ciclo
     CALL move_ast2					  ; se estiver move o asteróide uma linha
+	CALL verifica_fundo			      ; verifica se o asteroide chegou ao fim do ecrã
+	CMP R10, 1					      ; 
+	JZ  asteroide_dois
 	JMP ciclo_asteroide2			  ; se não colidiu volta para o ciclo para continuar a descer o asteróide
 
 move_ast2:							  ; rotina responsável por mover o asteroide
@@ -1015,6 +1018,9 @@ ciclo_asteroide3:
 	MOV [asteroide3], R10			  ; guarda na memória o estado do asteroide
     JNZ ciclo_asteroide3              ; se não estiver volta ao ciclo
     CALL move_ast3					  ; se estiver move o asteróide uma linha
+	CALL verifica_fundo			      ; verifica se o asteroide chegou ao fim do ecrã
+	CMP R10, 1					      
+	JZ  asteroide_tres
 	JMP ciclo_asteroide3			  ; se não colidiu volta para o ciclo para continuar a descer o asteróide
 
 move_ast3:							  ; rotina responsável por mover o asteroide
@@ -1095,7 +1101,10 @@ ciclo_asteroide4:
 	MOV R10, 5						  ; definir que o asteroide está em andamento
 	MOV [asteroide4], R10			  ; guarda na memória o estado do asteroide
     JNZ ciclo_asteroide4              ; se não estiver volta ao ciclo
-    CALL move_ast1					  ; se estiver move o asteróide uma linha
+    CALL move_ast4					  ; se estiver move o asteróide uma linha
+	CALL verifica_fundo			      ; verifica se o asteroide chegou ao fim do ecrã
+	CMP R10, 1
+	JZ  asteroide_quatro
 	JMP ciclo_asteroide4			  ; se não colidiu volta para o ciclo para continuar a descer o asteróide
 
 move_ast4:							  ; rotina responsável por mover o asteroide
@@ -1183,8 +1192,17 @@ escolhe_tipo_ast:
 ast_mineravel:
 	MOV R4, DEF_AST
 	RET
-
 	
+verifica_fundo:
+	MOV R7, 32						  ; fundo da tela
+	CMP R8, R7						  ; verifica se chegou ao fim da tela
+	JZ chegou_ao_fundo				  ; se chegou ao fim volta a criar um asteroide aleatoriamente
+	MOV R10, 0
+	RET
+
+chegou_ao_fundo:
+	MOV R10, 1
+	RET
 
 ; ******************************************************************************
 ; ********************************* SONDAS *************************************
