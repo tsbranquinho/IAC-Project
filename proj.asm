@@ -1146,16 +1146,16 @@ escolhe_asteroide:
 	RET
 
 escolhe_col_ast:
-	CMP R11, 0						  ; verifica se o asteroide vai nascer na esquerda
-	JZ valores_ast_0				  ; vai buscar referencias para desenhar o asteroide na esquerda
-	CMP R11, 1
+	CMP R11, 0						  ; verifica se o asteroide vai nascer na esquerda (anda para a direita)
+	JZ valores_ast_0
+	CMP R11, 1						  ; verifica se o asteroide vai nascer no meio (anda para a esquerda)
 	JZ valores_ast_1
-	CMP R11, 2
+	CMP R11, 2						  ; verifica se o asteroide vai nascer no meio (anda para baixo só)
 	JZ valores_ast_2
-	CMP R11, 3
-	JZ valores_ast_3
-	CMP R11, 4						  ; verifica se o asteroide vai nascer na direita
-	JZ valores_ast_4				  ; vai buscar referencias para desenhar o asteroide na direita						  
+	CMP R11, 3						  ; verifica se o asteroide vai nascer no meio (anda para a direita)
+	JZ valores_ast_3			    
+	CMP R11, 4						  ; verifica se o asteroide vai nascer na direita (anda para a esquerda)
+	JZ valores_ast_4					  
 
 valores_ast_0:
 	MOV R9, COL_AST_ESQ
