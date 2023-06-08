@@ -841,10 +841,8 @@ ciclo_asteroide1:
     MOV R11, [evento_int]             ; espera a interrupção ativar
     MOV R10, [estado_jogo]            ; copia o estado de jogo para o R10
     CMP R10, 1                        ; verifica se está a jogar
-	MOV R10, [asteroide1]             ; copia o sítio onde nasce o asteroide
-	MOV R10, 5						  ; definir que o asteroide está em andamento
-	MOV [asteroide1], R10			  ; guarda na memória o estado do asteroide
-    JNZ ciclo_asteroide1              ; se não estiver volta ao ciclo
+	JNZ ciclo_asteroide1			  ; se não estiver volta ao ciclo
+	CALL verifica_se_pode_desenhar_na_posicao
     CALL move_ast					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo				  ; verifica se chegou ao fundo da tela
 	MOV R7, [asteroide1 + 4]		  ; vai buscar o sítio onde nasceu o asteroide
@@ -884,10 +882,8 @@ ciclo_asteroide2:
     MOV R11, [evento_int]             ; espera a interrupção ativar
     MOV R10, [estado_jogo]            ; copia o estado de jogo para o R10
     CMP R10, 1                        ; verifica se está a jogar
-	MOV R10, [asteroide2]             ; copia o sítio onde nasce o asteroide
-	MOV R10, 5						  ; definir que o asteroide está em andamento
-	MOV [asteroide2], R10			  ; guarda na memória o estado do asteroide
-    JNZ ciclo_asteroide2              ; se não estiver volta ao ciclo
+	JNZ ciclo_asteroide2			  ; se não estiver volta ao ciclo
+	CALL verifica_se_pode_desenhar_na_posicao
     CALL move_ast					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo			      ; verifica se o asteroide chegou ao fim do ecrã
 	MOV R7, [asteroide2 + 4]		  ; obter posicao inicial do asteroide
@@ -926,10 +922,8 @@ ciclo_asteroide3:
     MOV R11, [evento_int]             ; espera a interrupção ativar
     MOV R10, [estado_jogo]            ; copia o estado de jogo para o R10
     CMP R10, 1                        ; verifica se está a jogar
-	MOV R10, [asteroide3]             ; copia o sítio onde nasce o asteroide
-	MOV R10, 5						  ; definir que o asteroide está em andamento
-	MOV [asteroide3], R10			  ; guarda na memória o estado do asteroide
-    JNZ ciclo_asteroide3              ; se não estiver volta ao ciclo
+	JNZ ciclo_asteroide3			  ; se não estiver volta ao ciclo
+	CALL verifica_se_pode_desenhar_na_posicao
     CALL move_ast					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo			      ; verifica se o asteroide chegou ao fim do ecrã
 	MOV R7, [asteroide3 + 4]
@@ -970,14 +964,12 @@ ciclo_asteroide4:
     MOV R11, [evento_int]             ; espera a interrupção ativar
     MOV R10, [estado_jogo]            ; copia o estado de jogo para o R10
     CMP R10, 1                        ; verifica se está a jogar
-	MOV R10, [asteroide4]             ; copia o sítio onde nasce o asteroide
-	MOV R10, 5						  ; definir que o asteroide está em andamento
-	MOV [asteroide4], R10			  ; guarda na memória o estado do asteroide
-    JNZ ciclo_asteroide4              ; se não estiver volta ao ciclo
+	JNZ ciclo_asteroide4			  ; se não estiver volta ao ciclo
+	CALL verifica_se_pode_desenhar_na_posicao
     CALL move_ast					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo			      ; verifica se o asteroide chegou ao fim do ecrã
 	MOV R7, [asteroide4 + 4]
-	CALL verifica_colisoes_nave			  ; verifica se o asteroide colidiu com a nave
+	CALL verifica_colisoes_nave		  ; verifica se o asteroide colidiu com a nave
 	CMP R11, 1						  ; verifica se o asteroide colidiu com a nave
 	JZ detetou_colisao_4_nave		  ; se colidiu vai para a rotina de colisão
 	CALL verifica_colisoes_sonda	  ; verifica se houve colisão com a sonda
@@ -991,6 +983,23 @@ detetou_colisao_4_nave:
 	CALL push_function
 	JMP asteroide_quatro
 
+verifica_se_pode_desenhar_na_posicao:
+	PUSH R8
+	PUSH R9
+	MOV R9, LINHA_NAVE
+	CMP R8, r9				  ; verifica se o asteroide já chegou ao limite em que se pode desenhar outro
+	JNZ dar_retorno					  ;	retornar
+	MOV R10, 5						  ; definir que o asteroide está em andamento
+	MOV [asteroide4], R10			  ; guarda na memória o estado do asteroide
+	POP R9
+	POP R8
+	RET
+
+dar_retorno:
+	POP R9
+	POP R8
+	RET
+	
 desenha_ast:
 	MOV R1, R8						  ; copia a linha do pixel de referência do asteroide
 	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
