@@ -36,6 +36,7 @@ MASCARA_3    EQU 0003H                              ; para isolar os 2 bits de m
 
 COMANDOS				EQU	6000H				; endereço de base dos comandos do MediaCenter
 
+SELECIONA_ECRA			EQU COMANDOS + 04H		; endereço do comando para selecionar o ecrã
 DEFINE_LINHA    		EQU COMANDOS + 0AH		; endereço do comando para definir a linha
 DEFINE_COLUNA   		EQU COMANDOS + 0CH		; endereço do comando para definir a coluna
 DEFINE_PIXEL    		EQU COMANDOS + 12H		; endereço do comando para escrever um pixel
@@ -62,6 +63,7 @@ LIMITE_SONDA        EQU LINHA_TIRO - 11			; limite da sonda
 COLUNA_ESQUERDA     EQU COLUNA_TIRO - 5 		; coluna da sonda esquerda
 COLUNA_DIREITA      EQU COLUNA_TIRO + 5			; coluna da sonda direita
 
+N_ASTEROIDES		EQU 4
 LINHA_AST       	EQU 0       				; linha do asteroide (primeira linha)
 COL_AST_ESQ			EQU 0       				; coluna do asteroide que aparece à esquerda (primeira coluna)
 COL_AST_MEIO        EQU 29						; coluna do asteroide que aparece à meio (primeira coluna)
@@ -286,6 +288,34 @@ DEF_ASTE_EXPLOSAO:
 	WORD 		VERMELHO, 0, 0, 0, VERMELHO
 
 
+linhas_asteroides:				; linha em que está cada asteróide (inicializada com a inicial)
+	WORD LINHA_AST
+	WORD LINHA_AST
+	WORD LINHA_AST
+	WORD LINHA_AST
+	WORD LINHA_AST
+
+coluna_asteroides:				; coluna em que cada asteróide está (inicializada com a coluna inicial)
+	WORD COL_AST_ESQ
+	WORD COL_AST_MEIO
+	WORD COL_AST_MEIO
+	WORD COL_AST_MEIO
+	WORD COL_AST_DIR
+
+incrementos_col_asteroides:		; incrementos que cada asteróide precisa no valor da coluna
+	WORD 1
+	WORD -1
+	WORD 0
+	WORD 1
+	WORD -1
+
+tipos_asteroides:
+	WORD -1
+	WORD -1
+	WORD -1
+	WORD -1
+	WORD -1
+
 DEF_TIRO:
 	WORD 		LINHA_TIRO, COLUNA_TIRO
 	WORD		COR_TIRO
@@ -330,17 +360,23 @@ cenario_inicial:
 	EI2								  ; ativa interrupção da energia (display)
 	EI3							      ; ativa interrupção da nave
 	EI								  ; ativa interrupções (geral)
+	
 
+	MOV	R11, N_ASTEROIDES		; número de bonecos a usar (até 4)
+
+loop_asteroides:
+	SUB	R11, 1			; próximo boneco
+	CALL	asteroide_um			; cria uma nova instância do processo asteroide (o valor de R11 distingue-as)
+						; cada processo fica com uma cópia independente dos registos
+	CMP  R11, 0			; já criou as instâncias todas?
+    JNZ	lopp_asteroides		; se não criou ainda volta para o loop
+
+	CALL nave
 	CALL teclado
 	CALL energia
-	CALL asteroide_um
-	CALL asteroide_dois
-	CALL asteroide_tres
-	CALL asteroide_quatro
 	CALL sonda_central
 	CALL sonda_esquerda
 	CALL sonda_direita
-	CALL nave
 
 espera_inicio:
 	MOV R0, [tecla_carregada]
@@ -833,6 +869,8 @@ asteroide_um:
 	MOV [asteroide1], R11			  ; guarda o sítio onde nasce o asteroide
 	MOV [asteroide1+2], R10		      ; guarda o tipo de asteroide
 	MOV [asteroide1+4], R11			  ; guarda o sítio onde nasce o asteroide (permanece igual até outro nascer)
+	SHL R11
+	MOV [tipos_asteroides]
 	MOV R8, LINHA_AST				  ; guarda NO R8 a linha que vai começar (linha 0 sempre)
 	CALL desenha_ast
 	JMP ciclo_asteroide1
@@ -977,7 +1015,7 @@ ciclo_asteroide4:
     CALL move_ast					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo			      ; verifica se o asteroide chegou ao fim do ecrã
 	MOV R7, [asteroide4 + 4]
-	CALL verifica_colisoes_nave			  ; verifica se o asteroide colidiu com a nave
+	CALL verifica_colisoes_nave		  ; verifica se o asteroide colidiu com a nave
 	CMP R11, 1						  ; verifica se o asteroide colidiu com a nave
 	JZ detetou_colisao_4_nave		  ; se colidiu vai para a rotina de colisão
 	CALL verifica_colisoes_sonda	  ; verifica se houve colisão com a sonda
@@ -998,6 +1036,7 @@ desenha_ast:
 	PUSH R2
 	PUSH R4
 	PUSH R6
+	PUSH R7
 	MOV R5, [R4]					  ; guarda em R5 a largura do asteróide
 	ADD R4, 2						  ; altera o R4 para guardar o endereço da altura do asteróide
 	MOV R6, [R4]				      ; guarda no R6 a altura do asteróide
@@ -1010,6 +1049,7 @@ ciclo_desenha_ast:					  ; altera os valores para desenhar a próxima linha do a
 	ADD R1, 1						  ;	troca a linha em que se está a desenhar
 	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
 	JNZ ciclo_desenha_ast			  ; repete o ciclo até desenhar todas as linhas do asteroide
+	POP R7
 	POP R6
 	POP R4
 	POP R2
