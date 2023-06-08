@@ -30,6 +30,7 @@ COLISAO_NAVE EQU 22
 ULTIMA_LINHA EQU 32
 TECLA_C    	 EQU 0CH
 TECLA_D      EQU 0DH
+TECLA_F      EQU 0FH
 MASCARA      EQU 0FH     							; para isolar os 4 bits de menor peso, ao ler as colunas do teclado
 MASCARA_2    EQU 00FFH						        ; para isolar os 8 bits de menor peso, para a aleatoriedade
 MASCARA_3    EQU 0003H                              ; para isolar os 2 bits de menor peso, para as colisões
@@ -154,34 +155,6 @@ estado_jogo:
 nave_atual:
 	WORD 0					  ; nave atual (0-7)
 
-coord_sonda_esquerda:
-	WORD 0, 0, 0              ; sonda esquerda (linha, coluna, colisão)
-
-coord_sonda_direita:
-	WORD 0, 0, 0              ; sonda direita (linha, coluna, colisão)
-
-coord_sonda_central:
-	WORD 0, 0, 0              ; sonda central (linha, coluna, colisão)
-
-asteroide1:
-	WORD 0					  ; sítio onde nasce asteróide 1 (0-5) (5 significa já andou 1 vez ou não existe)
-	WORD 0                    ;	tipo de asteróide
-	WORD 0					  ; posição onde nasce asteróide 1 (0-4) (permanece inalterado até novo asteroide)
-
-asteroide2:
-	WORD 0					  ; sítio onde nasce asteróide 2 (0-5) (5 significa já andou 1 vez ou não existe)
-	WORD 0                    ;	tipo de asteróide
-	WORD 0					  ; posição onde nasce asteróide 2 (0-4) (permanece inalterado até novo asteroide)
-
-asteroide3:
-	WORD 0					  ; sítio onde nasce asteróide 3 (0-5) (5 significa já andou 1 vez ou não existe)
-	WORD 0                    ;	tipo de asteróide
-	WORD 0					  ; posição onde nasce asteróide 3 (0-4) (permanece inalterado até novo asteroide)
-
-asteroide4:
-	WORD 0					  ; sítio onde nasce asteróide 4 (0-5) (5 significa já andou 1 vez )
-	WORD 0                    ;	tipo de asteróide
-	WORD 0					  ; posição onde nasce asteróide 4 (0-4) (permanece inalterado até novo asteroide)
 
 DEF_NAVE_0:		; tabela que define uma das variações de cores do painel
 	WORD		0, 0, 0, 0, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, 0, 0, 0, 0
@@ -280,7 +253,7 @@ dados_asteroides:                   ; dados dos asteroides
 	WORD 0, 5, 0, 0, 0, 0			; posição inicial (0-5) 5 - ainda não nasceu ou já pode ser criado na mesma posição
 	WORD 0, 5, 0, 0, 0, 0			; posição inicial imutável (0-4)
 	WORD 0, 5, 0, 0, 0, 0			; linha/coluna do asteróide
-									; colisão com sonda (0-1) 0 - não colidiu, 1 - colidiu
+									; colisão com sonda (0-1) 0 -> não colidiu, 1 -> colidiu
 
 dados_sondas:
 	WORD 0, 0, -1					; linha/coluna da sonda e incremento da coluna
@@ -377,15 +350,15 @@ setup:
     MOV  [APAGA_ECRÃ], R1			  ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
 	MOV  R1, 0                        ; vídeo número 0
 	MOV  [REPRODUZ], R1				  ; reproduz o vídeo número 0
-	;MOV	 R7, 1						  ; valor a somar à coluna do boneco, para o movimentar
+	;MOV	 R7, 1					  ; valor a somar à coluna do boneco, para o movimentar       ****************TIRAR EM PRINCIPIO*********
 	MOV  R11, 100					  ; valor do display inicial do jogo
 	MOV [energia_total], R11		  ; valor da energia total
 	CALL mostra_display				  ; mostra o valor da energia total no display
     
-	MOV R8, DEF_NAVE_0				  ; endereço do boneco
+	MOV R8, DEF_NAVE_0				  ; endereço da nave
 	MOV R11, 0						  ; valor da nave atual
 	MOV [nave_atual], R11			  ; guarda o valor da nave atual
-	;MOV R11, 5                        ; não há asteroides
+	;MOV R11, 5                       ; não há asteroides
 	;MOV [asteroide1], R11			  ; guarda o valor do asteroide 1
 	;MOV [asteroide2], R11			  ; guarda o valor do asteroide 2
 	;MOV [asteroide3], R11			  ; guarda o valor do asteroide 3
@@ -430,8 +403,12 @@ verifica_tecla:
 	MOV R6, TECLA_D
 	CMP R6, R0
 	JZ  pausa_jogo
-	  
-	RET  
+
+	;MOV R6, TECLA_F
+	;CMP R6, R0
+	;JZ  termina_jogo
+	;  
+	;RET  
 
 verifica_tecla_pausa:
 
@@ -462,22 +439,120 @@ verifica_tecla_pausa:
 pausa_jogo:
 	MOV  R11, 2
 	MOV  [estado_jogo], R11
+	DI3
+	DI2
+	DI1
+	DI0
+	DI
 	MOV  [APAGA_AVISO], R1			   ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
 	MOV  R1, 0                         ; vídeo número 0
 	MOV  [PAUSA], R1				   ; reproduz o vídeo número 0
 	MOV  R1, 1						   ; imagem número 1
-	MOV  [COLOCA_CENARIO_FRONTAL], R1 ; reproduz a imagem número 1
+	MOV  [COLOCA_CENARIO_FRONTAL], R1  ; reproduz a imagem número 1
 	JMP  controlo
 
 retoma_jogo:
 	MOV  R11, 1
 	MOV  [estado_jogo], R11
+	EI3
+	EI2
+	EI1
+	EI0
+	EI
 	MOV  [APAGA_AVISO], R1			   ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
 	MOV  R1, 1						   ; imagem número 1
 	MOV  [APAGA_CENARIO_FUNDO], R1     ; apaga a imagem número 1
 	MOV  R1, 0                         ; vídeo número 0
 	MOV  [CONTINUA], R1				   ; continua a reproduzir o vídeo número 0
 	JMP  controlo
+
+;termina_jogo:
+;	DI3
+;	DI2
+;	DI1
+;	DI0
+;	DI
+;	MOV  R11, 3
+;	MOV  [estado_jogo], R11
+;	MOV  [APAGA_AVISO], R1			   ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+;	;MOV  R1, 0                        ; vídeo número 0
+;	;MOV  [TERMINA], R1				   ; reproduz o vídeo número 0
+;	JMP  reseta_jogo				   ; reseta as variáveis do jogo (exceto memória)
+;
+;reseta_jogo:
+;	PUSH R1
+;	PUSH R2
+;	PUSH R3
+;	PUSH R4
+;	PUSH R5
+;	PUSH R6
+;	MOV R1, 0						    ; resetar a 0
+;	MOV R4, 5							; resetar a 5
+;	MOV R2, dados_asteroides			; endereço dos dados dos asteroides
+;	MOV R3, 8							; incremento de 8
+;	MOV R5, dados_asteroides     		; cópias dos endereços dos dados dos asteroides
+;	MOV R6, 12							; incremento de 12
+;
+;	MOV [R2], R1						; resetar a 0
+;	MOV [R2 + 2], R4					; resetar a 5
+;	MOV [R2 + 4], R1					; resetar a 0
+;	MOV [R2 + 6], R1					; resetar a 0
+;	MOV R5, R2
+;	ADD R5, R3							; incrementar o endereço dos dados dos asteroides
+;	MOV [R5], R1						; resetar a 0
+;	MOV [R5 + 2], R1					; resetar a 0
+;
+;	ADD R2, R6							; somar 12 (próximo asteroide)
+;	MOV R5, R2
+;	MOV [R2], R1						; resetar a 0
+;	MOV [R2 + 2], R4					; resetar a 5
+;	MOV [R2 + 4], R1					; resetar a 0
+;	MOV [R2 + 6], R1					; resetar a 0
+;	ADD R5, R3							; incrementar o endereço dos dados dos asteroides
+;	MOV [R5], R1						; resetar a 0
+;	MOV [R5 + 2], R1					; resetar a 0
+;	
+;	ADD R2, R6							; somar 12 (próximo asteroide)
+;	MOV R5, R2
+;	MOV [R2], R1						; resetar a 0
+;	MOV [R2 + 2], R4					; resetar a 5
+;	MOV [R2 + 4], R1					; resetar a 0
+;	MOV [R2 + 6], R1					; resetar a 0
+;	ADD R5, R3							; incrementar o endereço dos dados dos asteroides
+;	MOV [R5], R1						; resetar a 0
+;	MOV [R5 + 2], R1					; resetar a 0
+;
+;	ADD R2, R6							; somar 12 (próximo asteroide)
+;	MOV R5, R2
+;	MOV [R2], R1						; resetar a 0
+;	MOV [R2 + 2], R4					; resetar a 5
+;	MOV [R2 + 4], R1					; resetar a 0
+;	MOV [R2 + 6], R1					; resetar a 0
+;	ADD R5, R3							; incrementar o endereço dos dados dos asteroides
+;	MOV [R5], R1						; resetar a 0
+;	MOV [R5 + 2], R1					; resetar a 0
+;
+;	MOV R2, dados_sondas				; endereço dos dados das sondas
+;	MOV R3, 6							; incremento de 6
+;	MOV [R2], R1						; resetar a 0
+;	MOV [R2 + 2], R1					; resetar a 0
+;	ADD R2, R3							; incrementar o endereço dos dados das sondas
+;	MOV [R2], R1						; resetar a 0
+;	MOV [R2 + 2], R1					; resetar a 0
+;	ADD R2, R3							; incrementar o endereço dos dados das sondas
+;	MOV [R2], R1						; resetar a 0
+;	MOV [R2 + 2], R1					; resetar a 0
+;
+;	POP R6
+;	POP R5
+;	POP R4
+;	POP R3
+;	POP R2
+;	POP R1
+;	POP R0
+;	JMP espera_inicio
+
+
 
 ; ******************************************************************************
 ; ******************************** DISPLAY *************************************
@@ -750,10 +825,21 @@ energia:
 	JNZ energia
 	MOV R11, [energia_total]
 	SUB R11, 3
+	;CALL verifica_fim_jogo
 	MOV [energia_total], R11
 	CALL mostra_display               ; atualiza valor do display
 	JMP energia
 
+;verifica_fim_jogo:
+;	CMP R11, 0
+;	JLE fim_jogo
+;	RET
+;
+;fim_jogo:
+;	MOV R10, 3						  ; estado de jogo = 3 (fim de jogo)
+;	MOV [estado_jogo], R10
+;	CALL mostra_display
+;	RET
 ; ******************************************************************************
 ; *************************** PSEUDO-ALEATÓRIO *********************************
 ; ******************************************************************************
@@ -897,11 +983,11 @@ ciclo_asteroide1:
     CALL move_ast					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo				  ; verifica se chegou ao fundo da tela
 	CMP  R10, 1						  ; verifica se chegou ao fundo (valor 1)
-	JZ   detetou_colisao		      ; se chegou ao fundo
+	JZ   detetou_colisao		      ; se chegou ao fundo volta a asteroide geral
 	CALL verifica_colisoes_nave
 	CMP R10, 1						  ; verifica se houve colisão com a nave
-	JZ 	detetou_colisao  	          ; se houver colisão volta a desenhar o asteroide
-	CALL verifica_colisoes_sonda	  ; verifica se houve colisão com a sonda
+	JZ 	detetou_colisao  	          ; se houver colisão volta a asteroide_geral
+	CALL colisao_sonda	  			  ; verifica se há sinal de colisão com a sonda
 	CMP R10, 1						  ; verifica se houve colisão com a sonda
 	JZ 	detetou_colisao  	          ; se houver colisão volta a desenhar o asteroide
 	JZ  asteroide_geral				  ; se chegou ao fundo
@@ -1121,130 +1207,42 @@ verifica_colisao_nave:
 	
 houve_colisao_nave:
 	MOV R10, 1
+	;MOV R3, [estado_jogo]
+	;MOV R3, 3
+	;MOV [estado_jogo], R3
 	RET
 
-verifica_colisoes_sonda:
+colisao_sonda:
 	PUSH R0
 	PUSH R1
 	PUSH R2
-	PUSH R3
-	PUSH R4
-	PUSH R5
-	PUSH R6
-	PUSH R7
-	PUSH R8
-	PUSH R9
+	MOV R0, 10    					 ; valor a somar ao endereço
+	MOV R10, [R11 + R0]				 ; ler se há colisao (1)
+	MOV R1, [R11]				     ; tipo de asteroide
+	CMP R10, 1						 ; se for 0, é minerável
+	JZ sons
+	POP R2
+	POP R1
+	POP R0
+	RET		
 
-escolhe_colisoes_sonda:
-	CALL colisao_sonda_central
-	CMP R4, 1                          ; não precisa de verificar as outras
-	JZ fim_verificacao_sonda
-	CALL colisao_sonda_esquerda
-	CMP R4, 1                          ; não precisa de verificar as outras
-	JZ fim_verificacao_sonda
-	CALL colisao_sonda_direita
-	JMP fim_verificacao_sonda
-
-colisao_sonda_central:
-	MOV R5, [R11 + 4]		    ; copia a posição inicial do asteroide
-	CMP R5, 2					; se for zero (ast 2 --> pode bater na sonda central)
-	JZ  verifica_central
-	MOV R3, coord_sonda_central
-	JMP sem_colisao_sonda
-
-verifica_central:
-	MOV R1, [coord_sonda_central]      ; linha da sonda central
-	MOV R2, [coord_sonda_central + 2]  ; coluna da sonda central
-	MOV R3, coord_sonda_central        ; endereço da sonda central
-	MOV R6, R8						   ; copia a linha de referência do asteroide
-	ADD R8, ALTURA_AST				   ; parte inferior do asteroide
-	SUB R8, 1						   ; verdadeira parte inferior do asteroide
-	CMP R1, R8
-	JGT sem_colisao_sonda
-	CALL comparacao_superior
-	CMP R2, R9
-	JGE comparacao_a_direita
-	JMP sem_colisao_sonda
-
-colisao_sonda_esquerda:
-	MOV R5, [R11 + 4]					; copia a posição inicial do asteroide	
-	SHR R5, 1                           ; divide por dois (garante que 2, 3, 4 vão dar sempre >= 1)
-	CMP R5, 0						    ; se for zero (ast 0 ou 1 --> podem bater na sonda esquerda)
-	JZ  verifica_esquerda
-	MOV R3, coord_sonda_esquerda
-	JMP sem_colisao_sonda
-
-verifica_esquerda:
-	MOV R1, [coord_sonda_esquerda]      ; linha da sonda esquerda
-	MOV R2, [coord_sonda_esquerda + 2]  ; coluna da sonda esquerda
-	MOV R3, coord_sonda_esquerda        ; endereço da sonda esquerda
-	MOV R6, R8
-	ADD R8, ALTURA_AST				   ; parte inferior do asteroide
-	SUB R8, 1						   ; verdadeira parte inferior do asteroide
-	CMP R1, R8
-	JGT sem_colisao_sonda
-	CALL comparacao_superior
-	CMP R2, R9
-	JGE comparacao_a_direita
-	JMP sem_colisao_sonda
-
-colisao_sonda_direita:
-	MOV R5, [R11 + 4]					; copia a posição inicial do asteroide
-	MOV R2, 3					        ; constante pra fazer a divisão por 3
-	DIV R5, R2					        ; divide por 3
-	CMP R5, 1						    ; se for zero (ast 3 ou 4 --> podem bater na sonda direita)
-	JZ verifica_direita
-	MOV R3, coord_sonda_direita
-	JMP sem_colisao_sonda
-
-verifica_direita:
-	MOV R1, [coord_sonda_direita]      ; linha da sonda esquerda
-	MOV R2, [coord_sonda_direita + 2]  ; coluna da sonda esquerda
-	MOV R3, coord_sonda_direita        ; endereço da sonda esquerda
-	MOV R6, R8
-	ADD R8, ALTURA_AST				   ; parte inferior do asteroide
-	SUB R8, 1						   ; verdadeira parte inferior do asteroide
-	CMP R1, R8
-	JGT sem_colisao_sonda
-	CALL comparacao_superior
-	CMP R2, R9
-	JGE comparacao_a_direita
-	JMP sem_colisao_sonda
-
-comparacao_superior:
-	CMP R1, R6
-	JLT sem_colisao_sonda
+sons:
+	CMP R1, 0						 ; se for 0, é minerável
+	JNZ som_nao_mineravel
+	MOV R1, 0						 ; resetar colisão
+	MOV [R11 + R0], R1				 ; escrever 0 no endereço
+	MOV R2, 2						 ; executar som 2
+	MOV [REPRODUZ], R2				 ; reproduzir som
+	POP R2
+	POP R1
+	POP R0
 	RET
 
-comparacao_a_direita:
-	ADD R9, LARGURA_AST                 ; de forma a obter coluna da direita do asteróide
-	SUB R9, 1							; verdadeira coluna da direita do asteróide
-	CMP R2, R9
-	JLE houve_colisao
-	JMP sem_colisao_sonda
-
-houve_colisao:
-	MOV R10, 1							; houve colisão
-	MOV R7, 10							; valor a somar para obter dado de colisão do endereço do asteroide
-	MOV [R11 + R7], R10					; indicar ao asteroide que houve colisão
-	MOV [R3 + 4], R10					; indicar à sonda que houve colisão
-	MOV R4, 1						    ; não precisa de verificar as outras
-	RET
-
-sem_colisao_sonda:
-	MOV R10, 0							; não houve colisão
-	MOV R7, 10							; valor a somar para obter dado de colisão do endereço do asteroide
-	MOV [R11 + R7], R10					; indicar ao asteroide que não houve colisão
-	RET
-
-fim_verificacao_sonda:
-	POP R9
-	POP R8
-	POP R7
-	POP R6
-	POP R5
-	POP R4
-	POP R3
+som_nao_mineravel:
+	MOV R2, 3						 ; executar som 3
+	MOV [REPRODUZ], R2				 ; reproduzir som
+	MOV R1, 0						 ; resetar colisão
+	MOV [R11 + R0], R1				 ; escrever 0 no endereço
 	POP R2
 	POP R1
 	POP R0
@@ -1475,124 +1473,6 @@ apaga_sonda:
 	CALL escreve_pixel
 	RET
 	
-	
-;PROCESS SP_inicial_sonda_central              ; indicação do início do processo da sonda central
-;
-;sonda_central:
-;	MOV R0, [tecla_1_carregada]
-;	MOV R2, COLUNA_sonda
-;	MOV R4, DISPLAYS
-;	MOV R5, R2
-;	MOV R6, 1								  ; indica que a sonda ainda não chegou ao limite
-;	MOV R9, LINHA_SONDA 
-;	MOV [coord_sonda_central], R9			  ; guarda a linha da sonda central
-;	MOV [coord_sonda_central + 2], R2		  ; guarda a coluna da sonda central
-;	MOV R10, 0                                ; indica o quanto a coluna varia
-;	MOV [coord_sonda_central + 4], R10		  ; sonda não colidiu
-;	MOV R11, [energia_total]
-;	SUB R11, 5
-;	MOV [energia_total], R11
-;	CALL mostra_display
-;	CALL desenha_sonda
-;	MOV R0, 1
-;	MOV [REPRODUZ], R0
-;	MOV R7, coord_sonda_central			   ; guarda na memória os dados da sonda central
-;
-;ciclo_sonda:
-;	MOV R1, [evento_int + 2]
-;	MOV R11, [estado_jogo]
-;	CMP R11, 1
-;	JNZ ciclo_sonda
-;	CALL verifica_limite
-;	CMP R6, 0
-;	JZ sonda_central
-;	CALL verifica_colisao_sonda
-;	CMP R11, 0
-;	JZ  sonda_central
-;	CALL move_sonda
-;	MOV [coord_sonda_central], R9			   ; atualiza a linha da sonda central
-;	MOV [coord_sonda_central + 2], R2	       ; atualiza a coluna da sonda central
-;	JMP ciclo_sonda
-;
-;PROCESS SP_inicial_sonda_esquerda
-;
-;sonda_esquerda:
-;	MOV R0, [tecla_0_carregada]
-;	MOV R4, DISPLAYS
-;	MOV R6, 1                                   ; indica que a sonda ainda não chegou ao limite
-;	MOV R9, LINHA_SONDA
-;	MOV [coord_sonda_esquerda], R9				; guarda a linha da sonda
-;	MOV R2, COLUNA_ESQUERDA
-;	MOV [coord_sonda_esquerda + 2], R2			; guarda a coluna da sonda
-;	MOV R10, 0
-;	MOV [coord_sonda_esquerda + 4], R10			; sonda não colidiu
-;	MOV R5, R2
-;	MOV R10, -1                                 ; indica o quanto a coluna varia
-;	MOV R11, [energia_total]
-;	SUB R11, 5
-;	MOV [energia_total], R11
-;	CALL mostra_display
-;	CALL desenha_sonda
-;	MOV R0, 1
-;	MOV [REPRODUZ], R0
-;	MOV R7, coord_sonda_esquerda                ; guarda o endereço dos dados da sonda esquerda
-;
-;ciclo_sonda_esquerda:
-;	MOV R1, [evento_int + 2]
-;	MOV R11, [estado_jogo]
-;	CMP R11, 1
-;	JNZ ciclo_sonda_esquerda
-;	CALL verifica_limite
-;	CMP R6, 0
-;	JZ sonda_esquerda
-;	CALL verifica_colisao_sonda
-;	CMP R11, 0
-;	JZ  sonda_esquerda
-;	CALL move_sonda
-;	MOV [coord_sonda_esquerda], R9               ; atualiza a linha atual da sonda
-;	MOV [coord_sonda_esquerda + 2], R2			 ; atualiza a coluna atual da sonda
-;	JMP ciclo_sonda_esquerda
-;
-;PROCESS SP_inicial_sonda_direita
-;
-;sonda_direita:
-;	MOV R0, [tecla_2_carregada]
-;	MOV R4, DISPLAYS
-;	MOV R6, 1									 ; indica que a sonda ainda não chegou ao limite
-;	MOV R9, LINHA_SONDA
-;	MOV [coord_sonda_direita], R9				 ; guarda a linha da sonda
-;	MOV R2, COLUNA_DIREITA
-;	MOV [coord_sonda_direita + 2], R2			 ; guarda a coluna da sonda
-;	MOV R10, 0
-;	MOV [coord_sonda_direita + 4], R10             ; sonda não colidiu
-;	MOV R5, R2
-;	MOV R10, 1									 ; indica o quanto a coluna varia 
-;	MOV R11, [energia_total]
-;	SUB R11, 5
-;	MOV [energia_total], R11
-;	CALL mostra_display
-;	CALL desenha_sonda
-;	MOV R0, 1
-;	MOV [REPRODUZ], R0
-;	MOV R7, coord_sonda_direita                ; guarda o endereço dos dados da sonda direita
-;	
-;ciclo_sonda_direita:
-;	MOV R1, [evento_int + 2]
-;	MOV R11, [estado_jogo]
-;	CMP R11, 1
-;	JNZ ciclo_sonda_direita
-;	CALL verifica_limite
-;	CMP R6, 0
-;	JZ sonda_direita
-;	CALL verifica_colisao_sonda
-;	CMP R11, 0
-;	JZ  sonda_direita
-;	CALL move_sonda
-;	MOV [coord_sonda_direita], R9               ; atualiza a linha atual da sonda
-;	MOV [coord_sonda_direita + 2], R2			 ; atualiza a coluna atual da sonda
-;	JMP ciclo_sonda_direita
-;
-;
 ; ******************************************************************************
 ; ******************************* INTERRUPÇÕES *********************************
 ; ******************************************************************************
