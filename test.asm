@@ -106,14 +106,8 @@ SP_inicial_teclado:
 	STACK 100H                        ; espaço reservado para o processo de energia
 SP_inicial_energia:
 
-	STACK 100H						  ; espaço reservado para o processo de movimento da sonda central
-SP_inicial_sonda_central:
-
-	STACK 100H						  ; espaço reservado para o processo de movimento da sonda esquerda
-SP_inicial_sonda_esquerda:
-
-	STACK 100H						  ; espaço reservado para o processo de movimento da sonda direita
-SP_inicial_sonda_direita:
+	STACK 100H						  ; espaço reservado para o processo de movimento das sondas
+SP_inicial_sonda:
 
 	STACK 100H						  ; espaço reservado para o processo da nave
 SP_inicial_nave:
@@ -188,7 +182,7 @@ asteroide4:
 	WORD 0                    ;	tipo de asteróide
 	WORD 0					  ; posição onde nasce asteróide 4 (0-4) (permanece inalterado até novo asteroide)
 
-DEF_NAVE_0:					  ; tabela que define o boneco (cor, largura, pixels)
+DEF_NAVE_0:					  ; tabela que define a nave (cor, largura, pixels)
 	WORD		0, 0, 0, 0, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, PRETO, 0, 0, 0, 0
 	WORD 		0, 0, PRETO, PRETO, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, PRETO, PRETO, 0, 0
 	WORD 		0, 0, PRETO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, ROXO, AZUL_CLARO, PRETO, VERDE_CLARO, BRANCO, AZUL_ESCURO, AZUL_ESCURO, AZUL_ESCURO, PRETO, 0, 0
@@ -361,14 +355,24 @@ cenario_inicial:
 	EI								  ; ativa interrupções (geral)
 	
 
-	MOV	R7, N_ASTEROIDES		; número de bonecos a usar (até 4)
+	MOV	R7, N_ASTEROIDES		; número de asteróides (4 asteróides)
 
 loop_asteroides:
-	SUB	R7, 1			        ; próximo boneco
-	CALL	asteroide_inicio    ; cria uma nova instância do processo asteroide (o valor de R11 distingue-as)
+	SUB	R7, 1			        ; próxima instância
+	CALL asteroide_inicio    	; cria uma nova instância do processo sonda (o valor de R7 distingue-as)
 						        ; cada processo fica com uma cópia independente dos registos
-	CMP  R7, 0			        ; já criou as instâncias todas?
-    JNZ	loop_asteroides		    ; se não criou ainda volta para o loop
+	CMP  R7, 0			        ; confirma se já criou todas as instâncias
+    JNZ	loop_asteroides		    ; se ainda não criou volta para o loop
+
+
+	MOV R7, N_SONDAS			; número de sondas (3 sondas)
+
+loop_sondas:
+	SUB R7, 1					; próxima instância
+	CALL sonda_inicio			; cria uma nova instância do processo sonda (o valor de R7 distingue-as)
+								; cada processo fica com uma cópia independente dos registos
+	CMP R7, 0					; confirma se já criou todas as instâncias
+	JNZ loop_sondas				; se ainda não criou volta para o loop
 
 	CALL nave
 	CALL teclado
@@ -1040,38 +1044,38 @@ escolhe_col_ast:
 
 valores_ast_0:
 	MOV R9, COL_AST_ESQ				  ; guarda a coluna inicial do asteroide da esquerda
-	MOV R0, 1						  ; o quanto a coluna vai variar em cada ciclo
+	MOV R0, 1						  ; variação da coluna do asteróide (desloca-se para a direita)
 	POP R1
 	RET
 
 valores_ast_1:
 	MOV R9, COL_AST_MEIO			  ; guarda a coluna inicial do asteroide do meio
-	MOV R0, -1						  ; o quanto a coluna vai variar em cada ciclo
+	MOV R0, -1						  ; variação da coluna do asteróide (desloca-se para a esquerda)
 	POP R1
 	RET
 
 valores_ast_2:
 	MOV R9, COL_AST_MEIO			  ; guarda a coluna inicial do asteroide do meio
-	MOV R0, 0						  ; o quanto a coluna vai variar em cada ciclo
+	MOV R0, 0						  ; variação da coluna do asteróide (mantém-se na vertical)
 	POP R1
 	RET
 
 valores_ast_3:
 	MOV R9, COL_AST_MEIO			  ; guarda a coluna inicial do asteroide do meio
-	MOV R0, 1						  ; o quanto a coluna vai variar em cada ciclo
+	MOV R0, 1						  ; variação da coluna do asteróide (desloca-se para a direita)
 	POP R1
 	RET
 
 valores_ast_4:
 	MOV R9, COL_AST_DIR				  ; guarda a coluna inicial do asteroide da direita
-	MOV R0, -1						  ; o quanto a coluna vai variar em cada ciclo
+	MOV R0, -1						  ; variação da coluna do asteróide (desloca-se para a esquerda)
 	POP R1
 	RET
 
 
 escolhe_tipo_ast:
 	PUSH R1							  ; para a comparação
-	MOV R1, [R11]
+	MOV R1, [R11]					  
 	CMP R1, 0
 	JZ ast_mineravel
 	MOV R4, DEF_ASTE				  ; guarda o design do asteroide não minerável
