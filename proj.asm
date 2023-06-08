@@ -289,7 +289,7 @@ DEF_ASTE_EXPLOSAO:
 DEF_TIRO:
 	WORD 		LINHA_TIRO, COLUNA_TIRO
 	WORD		COR_TIRO
-						
+				
 ; ******************************************************************************
 ; ********************************** CÓDIGO ************************************
 ; ******************************************************************************
@@ -472,6 +472,8 @@ mostra_display:
 	PUSH R7
 	MOV R1, 0
 	MOV R11, [energia_total]
+	CMP R11, 0
+	JLE menor_zero
 	MOV R7, R11
 	MOV R2, 1000
 	MOV R5, 10
@@ -488,6 +490,10 @@ converte_decimal:
 	SHL R1, 4 						  ;passo 5
 	OR R1, R3 						  ;passo 6
 	JMP converte_decimal
+
+menor_zero:
+	MOV R1, 0
+	JMP escreve_display
 
 escreve_display:
 	MOV [R4], R1					  ; escreve no periférico do display
@@ -999,7 +1005,7 @@ dar_retorno:
 	POP R9
 	POP R8
 	RET
-	
+
 desenha_ast:
 	MOV R1, R8						  ; copia a linha do pixel de referência do asteroide
 	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
