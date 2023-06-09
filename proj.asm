@@ -340,8 +340,7 @@ espera_inicio:
 	MOV R1, TECLA_C
 	CMP R0, R1
 	JNZ espera_inicio
-	MOV R0, [estado_jogo]
-	ADD R0, 1
+	MOV R0, 1
 	MOV [estado_jogo], R0
 
 setup:
@@ -404,11 +403,11 @@ verifica_tecla:
 	CMP R6, R0
 	JZ  pausa_jogo
 
-	;MOV R6, TECLA_F
-	;CMP R6, R0
-	;JZ  termina_jogo
-	;  
-	;RET  
+	MOV R6, TECLA_F
+	CMP R6, R0
+	JZ  termina_jogo
+	  
+	RET  
 
 verifica_tecla_pausa:
 
@@ -466,18 +465,18 @@ retoma_jogo:
 	MOV  [CONTINUA], R1				   ; continua a reproduzir o vídeo número 0
 	JMP  controlo
 
-;termina_jogo:
+termina_jogo:
 ;	DI3
 ;	DI2
 ;	DI1
 ;	DI0
 ;	DI
-;	MOV  R11, 3
-;	MOV  [estado_jogo], R11
-;	MOV  [APAGA_AVISO], R1			   ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
-;	;MOV  R1, 0                        ; vídeo número 0
-;	;MOV  [TERMINA], R1				   ; reproduz o vídeo número 0
-;	JMP  reseta_jogo				   ; reseta as variáveis do jogo (exceto memória)
+	MOV  R11, 3
+	MOV  [estado_jogo], R11
+	MOV  [APAGA_AVISO], R1			   ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+	;MOV  R1, 0                        ; vídeo número 0
+	;MOV  [TERMINA], R1				   ; reproduz o vídeo número 0
+	JMP  espera_inicio				   ; reseta as variáveis do jogo (exceto memória)
 ;
 ;reseta_jogo:
 ;	PUSH R1
@@ -969,6 +968,7 @@ asteroide_geral:
 	CALL escolhe_asteroide
 	CALL escolhe_col_ast
 	CALL escolhe_tipo_ast
+	CALL reseta_colisao
 
 	MOV R8, LINHA_AST				  ; guarda NO R8 a linha que vai começar (linha 0 sempre)
 	CALL desenha_ast
@@ -977,6 +977,8 @@ asteroide_geral:
 ciclo_asteroide1:
     MOV R10, [evento_int]             ; espera a interrupção ativar
     MOV R10, [estado_jogo]            ; copia o estado de jogo para o R10
+	CMP R10, 3						  ; verifica se acabou o jogo
+	JZ  asteroide_geral               ; se acabou o jogo volta ao asteróide geral
     CMP R10, 1                        ; verifica se está a jogar
 	JNZ ciclo_asteroide1			  ; se não estiver volta ao ciclo
 	CALL verifica_se_pode_desenhar_na_posicao
@@ -1135,6 +1137,16 @@ escolhe_tipo_ast:
 	JZ ast_mineravel
 	MOV R4, DEF_ASTE				  ; guarda o design do asteroide não minerável
 	POP R1
+	RET
+
+reseta_colisao:
+	PUSH R1
+	PUSH R2
+	MOV  R1, 10						  ; valor a somar para obter o endereço da colisão
+	MOV  R2, 0						  ; valor a guardar na memória
+	MOV  [R11 + R1], R2				  ; guarda o valor 0 na memória
+	POP  R2
+	POP  R1
 	RET
 
 ast_mineravel:
@@ -1308,6 +1320,8 @@ direita:
 ciclo_sonda:
 	MOV R0, [evento_int + 2]
 	MOV R0, [estado_jogo]
+	CMP R0, 3
+	JZ sonda
 	CMP R0, 1
 	JNZ ciclo_sonda
 	CALL verifica_limite
@@ -1346,7 +1360,7 @@ verifica_colisao_sonda:
 	PUSH R8
 	PUSH R9
 	PUSH R10
-	MOV  R0, 4							 ; número de asteroides
+	MOV  R0, 4							 ; número de asteróides
 	CALL ciclo_verificar_asteroides		 ; verificar se houve colisão com algum asteroide
 	JMP pop_function
 
@@ -1359,21 +1373,57 @@ ciclo_verificar_asteroides:
 	MOV  R1, dados_asteroides		     ; endereço base dos dados dos asteroides
 	ADD  R1, R2							 ; endereço base do asteroide
 
-	MOV  R2, [R1]					 	 ; tipo de asteroide	
-	MOV  R3, [R1 + 6]                    ; linha do asteroide
+	MOV  R2, [R1]					 	 ; tipo de asteróide	
+	MOV  R3, [R1 + 6]                    ; linha do asteróide
 	MOV  R10, 8                   		 ; valor a somar para obter a coluna
 	MOV  R4, [R1 + R10]                  ; coluna do asteróide
 	MOV  R10, 10						 ; valor a somar para o dado de colisão do asteróide
-	MOV  R5, R1                  		 ; parte 1 - endereço da colisão do asteroide
-	ADD  R5, R10						 ; parte 2 - endereço da colisão do asteroide
-	MOV  R10, 0
-	MOV  [R5], R10						 ; resetar na memória a colisão do asteroide
+	MOV  R5, R1                  		 ; parte 1 - endereço da colisão do asteróide
+	ADD  R5, R10						 ; parte 2 - endereço da colisão do asteróide
+	CALL verifica_asteroide_especifico	 ; verificar se houve colisão com o asteroide
+	CMP  R10, 1							 ; se não puder colidir
+	JNZ  verifica_proximo_asteroide		 ; verificar próximo asteróide
 	CALL verifica_colisao_asteroide
 	CMP  R6, 1							 ; se colidir, apagar a sonda e sair do ciclo
 	JZ   apagar_sonda					 ; se sim, apagar a sonda
-	MOV  R6, 0							 ; se não colidir, verificar próximo asteroide
+	MOV  R6, 0							 ; se não colidir, verificar próximo asteróide
 	CMP  R0, 0							 ; se já verificou todos os asteroides
 	JNZ  ciclo_verificar_asteroides		 ; próximo asteróide
+	RET
+
+verifica_proximo_asteroide:
+	CMP  R0, 0							 ; se já verificou todos os asteroides
+	JNZ  ciclo_verificar_asteroides		 ; se não, próximo asteróide
+	RET
+
+verifica_asteroide_especifico:
+	MOV  R9, [R1 + 4]					 ; copia o valor da posição do asteróide
+	CMP  R7, 0							 ; se a sonda estiver na parte esquerda
+	JZ  parte_esquerda
+	CMP  R7, 1							 ; se a sonda estiver na parte central
+	JZ  parte_central
+	MOV  R10, 3							 ; asteróides com quais pode colidir: 3 ou 4
+	CMP  R9, R10					 	 ; ver se o asteróide está em alguma dessas posições
+	JGE  pode_colidir					 ; se sim, pode colidir
+	MOV  R10, 0							 ; se não, não pode colidir
+	RET
+
+parte_esquerda:
+	MOV  R10, 1							 ; asteróides com quais pode colidir: 0 ou 1
+	CMP  R9, R10					     ; ver se o asteróide está em alguma dessas posições
+	JLE  pode_colidir					 ; se sim, pode colidir
+	MOV  R10, 0							 ; se não, não pode colidir
+	RET
+
+parte_central:
+	MOV  R10, 2							 ; asteróides com quais pode colidir: 2
+	CMP  R9, R10					     ; ver se o asteróide está em alguma dessas posições
+	JZ   pode_colidir					 ; se sim, pode colidir
+	MOV  R10, 0							 ; se não, não pode colidir
+	RET
+
+pode_colidir:
+	MOV  R10, 1
 	RET
 
 verifica_colisao_asteroide:
