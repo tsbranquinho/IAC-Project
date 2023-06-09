@@ -48,9 +48,11 @@ APAGA_CENARIO_FUNDO     EQU COMANDOS + 44H		; endereço do comando para apagar a
 COLOCA_CENARIO_FRONTAL  EQU COMANDOS + 46H		; endereço do comando para colocar um cenário frontal
 SELECIONA_VIDEO_FUNDO   EQU COMANDOS + 48H		; endereço do comando para selecionar um vídeo de fundo
 SELECIONA_ESTADO_VID	EQU COMANDOS + 52H		; endereço do comando para selecionar o estado do vídeo
+METER_LOOP			    EQU COMANDOS + 58H	    ; endereço do comando para meter o vídeo em loop
 REPRODUZ		    	EQU COMANDOS + 5AH		; endereço do comando para tocar um som/vídeo
 PAUSA                   EQU COMANDOS + 5EH      ; endereço do comando para pausar um som/vídeo
 CONTINUA                EQU COMANDOS + 60H      ; endereço do comando para continuar um som/vídeo
+TERMINA                 EQU COMANDOS + 66H	    ; endereço do comando para terminar um som/vídeo
 
 
 LINHA_NAVE        	EQU 26      				; linha da nave (primeira linha)
@@ -262,7 +264,7 @@ DEF_ASTE_EXPLOSAO:					  ; tabela que define o desenho do asteroide nao minerave
 
 
 dados_asteroides:                     ; dados dos asteroides
-	WORD 0, 5, 0, 0, 0, 0 			  ; tipo de asteroide(0-3) 0 - Minerável, 1-3 Não minerável
+	WORD 0, 5, 0, 0, 0, 0 			  ; tipo de asteroide (0-3) 0 - Minerável, 1-3 Não minerável
 	WORD 0, 5, 0, 0, 0, 0			  ; posição inicial (0-5) 5 - ainda não nasceu ou já pode ser criado na mesma posição
 	WORD 0, 5, 0, 0, 0, 0			  ; posição inicial imutável (0-4)
 	WORD 0, 5, 0, 0, 0, 0			  ; linha/coluna do asteróide
@@ -364,6 +366,7 @@ setup:
 	MOV  [APAGA_CENARIO_FUNDO], R1    ; apaga a imagem número 1 (caso esteja desenhada)
 	MOV  R1, 0                        ; vídeo número 0
 	MOV  [REPRODUZ], R1				  ; reproduz o vídeo número 0
+	MOV  [METER_LOOP], R1			  ; mete o vídeo em loop
 	MOV  R11, 100					  ; valor do display inicial do jogo
 	MOV [energia_total], R11		  ; valor da energia total
 	CALL mostra_display				  ; mostra o valor da energia total no display
@@ -375,21 +378,20 @@ setup:
 	CALL desenha_nave				  ; desenha a nave
 
 controlo:
-	MOV R0, [tecla_carregada]
-	MOV R11, [estado_jogo]
-	CMP R11, 0
-	JZ  espera_inicio
-	CMP R11, 3
-	JZ  espera_inicio
-	MOV R1, 1
-    ;MOV [R4], R11      				  ; escreve linha e coluna a zero nos displays
+	MOV R0, [tecla_carregada]		  ; guarda a tecla carregada em R0
+	MOV R11, [estado_jogo]			  ; guarda o estado do jogo
+	CMP R11, 0						  ; verifica o estado do jogo
+	JZ  espera_inicio				  ; se ainda nao tiver começado espera pela tecla de começar
+	CMP R11, 3						  ; se o jogo estiver terminado
+	JZ  espera_inicio				  ; espera pela tecla de inicio
+	MOV R1, 1						  ; se nenhum se verificar entao o jogo está a decorrer
 
 obtem_tecla:
-	CMP R11, 1
-	JZ  call_verifica_tecla
-	CMP R11, 2
-	JZ  call_estado_pausa
-	JMP controlo
+	CMP R11, 1						  ; se o jogo estiver a correr espera por teclas/instruções
+	JZ  call_verifica_tecla			  ; espera a tecla carregada
+	CMP R11, 2						  ; verifica se o jogo está pausado
+	JZ  call_estado_pausa			  ; pausa o jogo
+	JMP controlo					   
 
 call_verifica_tecla:
 	CALL verifica_tecla
@@ -401,66 +403,37 @@ call_estado_pausa:
 
 verifica_tecla:	
 
-	;MOV R6, TECLA_ZERO
-	;CMP R6, R0
-	;JZ  ativa_tecla_0
-;
-	;MOV R6, TECLA_UM
-	;CMP R6, R0
-	;JZ  ativa_tecla_1
-;
-	;MOV R6, TECLA_DOIS
-	;CMP R6, R0
-	;JZ  ativa_tecla_2
-
-	MOV R6, TECLA_D
+	MOV R6, TECLA_D					  ; guarda a tecla D
 	CMP R6, R0
-	JZ  pausa_jogo
+	JZ  pausa_jogo					  ; se tiveres carregado a tecla D põe o jogo em pausa
 
-	MOV R6, TECLA_F
+	MOV R6, TECLA_F					  ; guarda a tecla F
 	CMP R6, R0
-	JZ  termina_jogo
+	JZ  termina_jogo				  ; se tiveres carregado a tecla F termina o jogo
 	  
 	RET  
 
 verifica_tecla_pausa:
 
-	MOV R6, TECLA_D
-	CMP R6, R0
-	JZ  retoma_jogo
+	MOV R6, TECLA_D					  ; guarda a tecla D
+	CMP R6, R0						  ; verifica a tecla carregada
+	JZ  retoma_jogo					  ; se estivermos em pausa e a tecla carregada for D retoma o jogo
 
-	MOV R6, TECLA_F
-	CMP R6, R0
-	JZ  termina_jogo
+	MOV R6, TECLA_F					  ; guarda a tecla F
+	CMP R6, R0						  ; verifica a tecla carregada
+	JZ  termina_jogo				  ; se estivermos em pausa e a tecla carregada for F termina o jogo
 	  
 	RET
 
-;ativa_tecla_0:
-;	PUSH R1
-;	MOV  [tecla_0_carregada], R1
-;	POP  R1
-;	RET
-;
-;ativa_tecla_1:
-;	PUSH R1
-;	MOV  [tecla_1_carregada], R1
-;	POP  R1
-;	RET
-;
-;ativa_tecla_2:
-;	PUSH R1
-;	MOV  [tecla_2_carregada], R1
-;	POP  R1
-;	RET
 
 pausa_jogo:
-	MOV  R11, 2
-	MOV  [estado_jogo], R11
-	DI3
-	DI2
-	DI1
-	DI0
-	DI
+	MOV  R11, 2						  ; põe o jogo em pausa
+	MOV  [estado_jogo], R11			  ; guarda o estado do jogo
+	DI3								  ; desativa a interrupção 3
+	DI2								  ; desativa a interrupção 2
+	DI1								  ; desativa a interrupção 1
+	DI0								  ; desativa a interrupção 0
+	DI								  ; desativa as interrupções (no geral)
 	MOV  [APAGA_AVISO], R1			  ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
 	MOV  R1, 0                        ; vídeo número 0
 	MOV  [PAUSA], R1				  ; reproduz o vídeo número 0
@@ -469,106 +442,32 @@ pausa_jogo:
 	JMP  controlo
 
 retoma_jogo:
-	MOV  R11, 1
-	MOV  [estado_jogo], R11
-	EI3
-	EI2
-	EI1
-	EI0
-	EI
+	MOV  R11, 1						  ; põe o estado do jogo em normal
+	MOV  [estado_jogo], R11			  ; guarda o estado do jogo
+	EI3								  ; ativa a interrupção 3
+	EI2								  ; ativa a interrupção 2
+	EI1								  ; ativa a interrupção 1
+	EI0								  ; ativa a interrupção 0
+	EI								  ; ativa as interrupções (no geral)
 	MOV  [APAGA_AVISO], R1			  ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
 	MOV  R1, 1						  ; imagem número 1
 	MOV  [APAGA_CENARIO_FUNDO], R1    ; apaga a imagem número 1
 	MOV  R1, 0                        ; vídeo número 0
 	MOV  [CONTINUA], R1				  ; continua a reproduzir o vídeo número 0
+	MOV  [METER_LOOP], R1			  ; mete o vídeo em loop
 	JMP  controlo
 
 termina_jogo:
-;	DI3
-;	DI2
-;	DI1
-;	DI0
-;	DI
-	MOV  R11, 3
-	MOV  [estado_jogo], R11
-	MOV  [APAGA_AVISO], R1			  ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
-	;MOV  R1, 0                       ; vídeo número 0
-	;MOV  [TERMINA], R1				  ; reproduz o vídeo número 0
-	JMP  espera_inicio				  ; reseta as variáveis do jogo (exceto memória)
-;
-;reseta_jogo:
-;	PUSH R1
-;	PUSH R2
-;	PUSH R3
-;	PUSH R4
-;	PUSH R5
-;	PUSH R6
-;	MOV R1, 0						    ; resetar a 0
-;	MOV R4, 5							; resetar a 5
-;	MOV R2, dados_asteroides			; endereço dos dados dos asteroides
-;	MOV R3, 8							; incremento de 8
-;	MOV R5, dados_asteroides     		; cópias dos endereços dos dados dos asteroides
-;	MOV R6, 12							; incremento de 12
-;
-;	MOV [R2], R1						; resetar a 0
-;	MOV [R2 + 2], R4					; resetar a 5
-;	MOV [R2 + 4], R1					; resetar a 0
-;	MOV [R2 + 6], R1					; resetar a 0
-;	MOV R5, R2
-;	ADD R5, R3							; incrementar o endereço dos dados dos asteroides
-;	MOV [R5], R1						; resetar a 0
-;	MOV [R5 + 2], R1					; resetar a 0
-;
-;	ADD R2, R6							; somar 12 (próximo asteroide)
-;	MOV R5, R2
-;	MOV [R2], R1						; resetar a 0
-;	MOV [R2 + 2], R4					; resetar a 5
-;	MOV [R2 + 4], R1					; resetar a 0
-;	MOV [R2 + 6], R1					; resetar a 0
-;	ADD R5, R3							; incrementar o endereço dos dados dos asteroides
-;	MOV [R5], R1						; resetar a 0
-;	MOV [R5 + 2], R1					; resetar a 0
-;	
-;	ADD R2, R6							; somar 12 (próximo asteroide)
-;	MOV R5, R2
-;	MOV [R2], R1						; resetar a 0
-;	MOV [R2 + 2], R4					; resetar a 5
-;	MOV [R2 + 4], R1					; resetar a 0
-;	MOV [R2 + 6], R1					; resetar a 0
-;	ADD R5, R3							; incrementar o endereço dos dados dos asteroides
-;	MOV [R5], R1						; resetar a 0
-;	MOV [R5 + 2], R1					; resetar a 0
-;
-;	ADD R2, R6							; somar 12 (próximo asteroide)
-;	MOV R5, R2
-;	MOV [R2], R1						; resetar a 0
-;	MOV [R2 + 2], R4					; resetar a 5
-;	MOV [R2 + 4], R1					; resetar a 0
-;	MOV [R2 + 6], R1					; resetar a 0
-;	ADD R5, R3							; incrementar o endereço dos dados dos asteroides
-;	MOV [R5], R1						; resetar a 0
-;	MOV [R5 + 2], R1					; resetar a 0
-;
-;	MOV R2, dados_sondas				; endereço dos dados das sondas
-;	MOV R3, 6							; incremento de 6
-;	MOV [R2], R1						; resetar a 0
-;	MOV [R2 + 2], R1					; resetar a 0
-;	ADD R2, R3							; incrementar o endereço dos dados das sondas
-;	MOV [R2], R1						; resetar a 0
-;	MOV [R2 + 2], R1					; resetar a 0
-;	ADD R2, R3							; incrementar o endereço dos dados das sondas
-;	MOV [R2], R1						; resetar a 0
-;	MOV [R2 + 2], R1					; resetar a 0
-;
-;	POP R6
-;	POP R5
-;	POP R4
-;	POP R3
-;	POP R2
-;	POP R1
-;	POP R0
-;	JMP espera_inicio
 
+	MOV  R11, 3						  ; poe o estado do jogo como terminado
+	MOV  [estado_jogo], R11			  ; guarda o estado do jogo
+	MOV  [APAGA_AVISO], R1			  ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
+	MOV  R1, 0                        ; vídeo número 0
+	MOV  [TERMINA], R1				  ; reproduz o vídeo número 0
+	MOV  [APAGA_ECRÃ], R1			  ; apaga o ecrã
+	MOV  R1, 4						  ; imagem número 4
+	MOV  [SELECIONA_CENARIO_FUNDO], R1; reproduz a imagem número 4
+	JMP  espera_inicio				  ; reseta as variáveis do jogo (exceto memória)
 
 
 ; ******************************************************************************
@@ -595,15 +494,15 @@ mostra_display:
 	JMP converte_decimal
 
 converte_decimal:
-	MOD R7, R2 						  ;passo 1
-	DIV R2, R5 						  ;passo 2
+	MOD R7, R2 						  ; passo 1
+	DIV R2, R5 						  ; passo 2
 	MOV R6, R2
 	CMP R6, 1
-	JLT escreve_display 			  ;passo 3
+	JLT escreve_display 			  ; passo 3
 	MOV R3, R7
-	DIV R3, R2 						  ;passo 4
-	SHL R1, 4 						  ;passo 5
-	OR R1, R3 						  ;passo 6
+	DIV R3, R2 						  ; passo 4
+	SHL R1, 4 						  ; passo 5
+	OR R1, R3 						  ; passo 6
 	JMP converte_decimal
 
 menor_zero:
@@ -856,8 +755,13 @@ fim_jogo:
 	MOV R10, 3						  ; estado de jogo = 3 (fim de jogo)
 	MOV [estado_jogo], R10			  ; guarda o estado de jogo na memória
 	CALL mostra_display				  ; mostra o display
-	MOV  [PAUSA], R1				  ; reproduz o vídeo número 0
+	MOV R1, 0						  ; video numero zero
+	MOV [TERMINA], R1				  ; pausa o vídeo
+	MOV [APAGA_ECRÃ], R1			  ; apaga o ecrã
+	MOV R1, 2						  ; imagem numero dois
+	MOV [SELECIONA_CENARIO_FUNDO], R1 ; colocar imagem 2 no ecrã
 	RET
+	
 ; ******************************************************************************
 ; *************************** PSEUDO-ALEATÓRIO *********************************
 ; ******************************************************************************
@@ -990,7 +894,6 @@ asteroide_geral:
 	CALL reseta_colisao
 
 	MOV R8, LINHA_AST				  ; guarda NO R8 a linha que vai começar (linha 0 sempre)
-	;MOV [COLOCA_CENARIO_FRONTAL], R7 ; troca o ecrã de píxeis
 	CALL desenha_ast
 	JMP ciclo_asteroide1
 
@@ -999,26 +902,26 @@ ciclo_asteroide1:
     MOV R10, [estado_jogo]            ; copia o estado de jogo para o R10
 	CMP R10, 3						  ; verifica se acabou o jogo
 	JZ  asteroide_geral               ; se acabou o jogo volta ao asteróide geral
-	;MOV [COLOCA_CENARIO_FRONTAL], R7 ; troca o ecrã de píxeis 
     CMP R10, 1                        ; verifica se está a jogar
 	JNZ ciclo_asteroide1			  ; se não estiver volta ao ciclo
 	CALL verifica_se_pode_desenhar_na_posicao
     CALL move_ast					  ; se estiver move o asteróide uma linha
 	CALL verifica_fundo				  ; verifica se chegou ao fundo da tela
 	CMP  R10, 1						  ; verifica se chegou ao fundo (valor 1)
-	JZ   detetou_colisao		      ; se chegou ao fundo volta a asteroide geral
+	JZ   detetou_colisao		      ; se chegou ao fundo volta a asteróide geral
 	CALL verifica_colisoes_nave
 	CMP R10, 1						  ; verifica se houve colisão com a nave
 	JZ 	detetou_colisao  	          ; se houver colisão volta a asteroide_geral
-	CALL colisao_sonda	  			  ; verifica se há sinal de colisão com a sonda
+	CALL verifica_colisao_sonda	  	  ; verifica se há sinal de colisão com a sonda
 	CMP R10, 1						  ; verifica se houve colisão com a sonda
 	JZ 	detetou_colisao  	          ; se houver colisão volta a desenhar o asteroide
 	JZ  asteroide_geral				  ; se chegou ao fundo
 	JMP ciclo_asteroide1			  ; se não chegou fim volta para o ciclo para continuar a descer o asteróide
 
 detetou_colisao:
-	CALL push_function				  ; apaga o asteroide
-	JMP asteroide_geral				  ; volta a desenhar o asteroide
+	CALL apaga_ast			  	  	  ; apaga o asteróide
+	JMP asteroide_geral				  ; volta a desenhar o asteróide
+
 
 desenha_ast:
 	MOV R1, R8						  ; copia a linha do pixel de referência do asteroide
@@ -1048,7 +951,7 @@ ciclo_desenha_ast:					  ; altera os valores para desenhar a próxima linha do a
 	RET								  ; volta quando terminou de desenhar o asteroide
 
 move_ast:							  ; rotina responsável por mover o asteroide
-	CALL push_function		
+	CALL apaga_ast		
 	ADD R8, 1						  ; modifica a linha de referencia para o desenho do asteroide
 	MOV R10, 6						  ; valor a somar para obter endereço da linha guardada na memória
 	MOV [R11 + R10], R8				  ; guarda a nova linha de referência para o desenho do asteroide	
@@ -1058,22 +961,22 @@ move_ast:							  ; rotina responsável por mover o asteroide
 	CALL desenha_ast
 	RET
 
-push_function:
+apaga_ast:
 	PUSH R1
 	PUSH R2
 	PUSH R5
 	PUSH R6
 	PUSH R8
-	MOV  R1, R8						  ; copia a linha do pixel de referência do asteroide
+	MOV  R1, R8						  ; copia a linha do pixel de referência do asteróide
 	MOV  R6, ALTURA_AST
 
-apaga_ast:
+ciclo_apaga_ast:
 	MOV R2, R9						  ; copia a coluna do pixel de referência do asteroide
 	MOV R5, LARGURA_AST				  ; largura do asteroide
 	CALL apaga_pixels
 	ADD R1, 1						  ;	troca a linha em que se está a desenhar
 	SUB R6, 1						  ; decrementa o número de linhas que faltam desenhar
-	JNZ apaga_ast				  	  ; repete até apagar todo o asteroide
+	JNZ ciclo_apaga_ast		  		  ; repete até apagar todo o asteróide
 	POP R8
 	POP R6
 	POP R5
@@ -1101,9 +1004,7 @@ dar_retorno:
 	RET
 
 escolhe_asteroide:	
-	CALL aleatorio					  ; gera um asteroide aleatoriamente
-									  ; FALTA MOVER PARA A MEMORIA OS VALORES DE R10 e R11
-									  ; TALVEZ TENHA DE IR PARA DENTRO DOS PROCESSOS
+	CALL aleatorio					  ; gera um asteróide aleatoriamente
 	RET
 
 escolhe_col_ast:
@@ -1224,7 +1125,6 @@ fim_verificacao:
 	POP R2
 	POP R1
 	POP R0
-	; 		PODE POR-SE O VERIFICA FUNDO AQUI EM VEZ DA FUNÇÃO PRINCIPAL
 	RET
 
 sem_hipotese:
@@ -1243,39 +1143,60 @@ houve_colisao_nave:
 	MOV R3, [estado_jogo]
 	MOV R3, 3
 	MOV [estado_jogo], R3
+	MOV R1, 0						  ; vídeo número zero
+	MOV  [TERMINA], R1				  ; pausa o vídeo
+	MOV [APAGA_ECRÃ], R1			  ; apaga o ecrã
+	MOV R1, 3						  ; imagem número três
+	MOV [SELECIONA_CENARIO_FUNDO], R1 ; seleciona a imagem três
 	RET
 
-colisao_sonda:
+verifica_colisao_sonda:
 	PUSH R0
 	PUSH R1
 	PUSH R2
+	PUSH R3
 	MOV R0, 10    					 ; valor a somar ao endereço
 	MOV R10, [R11 + R0]				 ; ler se há colisao (1)
 	MOV R1, [R11]				     ; tipo de asteroide
-	CMP R10, 1						 ; se for 0, é minerável
-	JZ sons
+	CMP R10, 1						 ; se for 1, há colisão
+	JZ houve_colisao_sonda
+	POP R3
 	POP R2
 	POP R1
 	POP R0
 	RET		
 
-sons:
+houve_colisao_sonda:
 	CMP R1, 0						 ; se for 0, é minerável
-	JNZ som_nao_mineravel
+	JNZ colisao_nao_mineravel
 	MOV R1, 0						 ; resetar colisão
 	MOV [R11 + R0], R1				 ; escrever 0 no endereço
 	MOV R2, 2						 ; executar som 2
 	MOV [REPRODUZ], R2				 ; reproduzir som
+	MOV R3, [evento_int]
+	CALL apaga_ast
+	MOV R4, DEF_AST_EXPLOSAO
+	CALL desenha_ast
+	MOV R3, [evento_int]
+	CALL apaga_ast
+	POP R3
 	POP R2
 	POP R1
 	POP R0
 	RET
 
-som_nao_mineravel:
+colisao_nao_mineravel:
 	MOV R2, 3						 ; executar som 3
-	MOV [REPRODUZ], R2				 ; reproduzir som
+	MOV [REPRODUZ], R2				 ; reproduzir som da colisão com o asteróide não minerável
 	MOV R1, 0						 ; resetar colisão
 	MOV [R11 + R0], R1				 ; escrever 0 no endereço
+	MOV R3, [evento_int]
+	CALL apaga_ast
+	MOV R4, DEF_ASTE_EXPLOSAO
+	CALL desenha_ast
+	MOV R3, [evento_int]
+	CALL apaga_ast
+	POP R3
 	POP R2
 	POP R1
 	POP R0
@@ -1302,7 +1223,7 @@ sonda_inicio:
 sonda:
 	MOV  R2, [tecla_carregada]	      ; ir buscar a tecla carregada
 	CMP  R2, R7						  ; desbloquear a instância consoante a tecla carregada
-	JNZ sonda
+	JNZ  sonda
 	MOV  R0, [estado_jogo]			  ; ir buscar o estado do jogo
 	CMP  R0, 1						  ; 1 indica jogo a correr
 	JNZ  sonda						  ; se não for 1 não desenha a sonda
@@ -1345,10 +1266,10 @@ ciclo_sonda:
 	JZ sonda
 	CMP R0, 1
 	JNZ ciclo_sonda
-	CALL verifica_limite
-	CMP R6, 0
+	CALL verifica_limite			  ; verifica se a sonda chegou ao limite
+	CMP R6, 0						  ; 0 indica que chegou ao limite
 	JZ sonda
-	CALL verifica_colisao_sonda
+	CALL verifica_colisao_asteroide
 	CMP R6, 1						  ; há colisão?								   
 	JZ sonda						  ; se sim, volta ao inicio
 	CALL move_sonda
@@ -1371,7 +1292,7 @@ limite_maximo:
 	MOV [R11+ 2], R6				  ; resetar na memória a coluna da sonda
 	RET
 
-verifica_colisao_sonda:
+verifica_colisao_asteroide:
 	PUSH R0
 	PUSH R1
 	PUSH R2
@@ -1404,7 +1325,7 @@ ciclo_verificar_asteroides:
 	CALL verifica_asteroide_especifico; verificar se houve colisão com o asteroide
 	CMP  R10, 1						  ; se não puder colidir
 	JNZ  verifica_proximo_asteroide	  ; verificar próximo asteróide
-	CALL verifica_colisao_asteroide
+	CALL verifica_se_colidiu
 	CMP  R6, 1						  ; se colidir, apagar a sonda e sair do ciclo
 	JZ   apagar_sonda			      ; se sim, apagar a sonda
 	MOV  R6, 0						  ; se não colidir, verificar próximo asteróide
@@ -1413,6 +1334,7 @@ ciclo_verificar_asteroides:
 	RET
 
 verifica_proximo_asteroide:
+	MOV  R6, 0						  ; indicar que não colidiu
 	CMP  R0, 0						  ; se já verificou todos os asteroides
 	JNZ  ciclo_verificar_asteroides	  ; se não, próximo asteróide
 	RET
@@ -1447,7 +1369,7 @@ pode_colidir:
 	MOV  R10, 1
 	RET
 
-verifica_colisao_asteroide:
+verifica_se_colidiu:
 	MOV  R8, [R11]					  ; linha da sonda
 	MOV  R9, [R11 + 2]				  ; coluna da sonda
 	CMP  R8, R3						  ; comparação da linha da sonda com a linha de referência do asteroide
@@ -1548,26 +1470,26 @@ apaga_sonda:
 ; ******************************* INTERRUPÇÕES *********************************
 ; ******************************************************************************
 
-rot_ast:
+rot_ast:						      ; interrupção dos asteroides
 	PUSH R1
-	MOV [evento_int], R1
+	MOV [evento_int], R1			  ; dá unlock dos processos dos asteróides
 	POP R1
 	RFE
 
-rot_sonda:
+rot_sonda:							  ; interrupção das sondas
 	PUSH R1
-	MOV [evento_int + 2], R1
+	MOV [evento_int + 2], R1		  ; dá unlock dos processos das sondas
 	POP R1
 	RFE
 
-rot_energia:
+rot_energia:						  ; interrupção da energia 
 	PUSH R1
-	MOV [evento_int + 4], R1
+	MOV [evento_int + 4], R1		  ; dá unlock do processo da energia
 	POP R1
 	RFE
 
-rot_nave:
+rot_nave:							  ; interrupção da nave
 	PUSH R1
-	MOV [evento_int + 6], R1
+	MOV [evento_int + 6], R1		  ; dá unlock do processo da nave
 	POP R1
 	RFE
