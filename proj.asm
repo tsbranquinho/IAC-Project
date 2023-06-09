@@ -45,7 +45,7 @@ APAGA_AVISO     		EQU COMANDOS + 40H		; endereço do comando para apagar o aviso
 APAGA_ECRÃ	 			EQU COMANDOS + 02H		; endereço do comando para apagar todos os pixels já desenhados
 SELECIONA_CENARIO_FUNDO EQU COMANDOS + 42H		; endereço do comando para selecionar uma imagem de fundo
 APAGA_CENARIO_FUNDO     EQU COMANDOS + 44H		; endereço do comando para apagar a imagem de fundo
-COLOCA_CENARIO_FRONTAL  EQU COMANDOS + 46H		; endereço do comnando para colocar um cenário frontal
+COLOCA_CENARIO_FRONTAL  EQU COMANDOS + 46H		; endereço do comando para colocar um cenário frontal
 SELECIONA_VIDEO_FUNDO   EQU COMANDOS + 48H		; endereço do comando para selecionar um vídeo de fundo
 SELECIONA_ESTADO_VID	EQU COMANDOS + 52H		; endereço do comando para selecionar o estado do vídeo
 REPRODUZ		    	EQU COMANDOS + 5AH		; endereço do comando para tocar um som/vídeo
@@ -981,6 +981,7 @@ asteroide_geral:
 	CALL reseta_colisao
 
 	MOV R8, LINHA_AST				  ; guarda NO R8 a linha que vai começar (linha 0 sempre)
+	;MOV [COLOCA_CENARIO_FRONTAL], R7  ; troca o ecrã de píxeis
 	CALL desenha_ast
 	JMP ciclo_asteroide1
 
@@ -989,6 +990,7 @@ ciclo_asteroide1:
     MOV R10, [estado_jogo]            ; copia o estado de jogo para o R10
 	CMP R10, 3						  ; verifica se acabou o jogo
 	JZ  asteroide_geral               ; se acabou o jogo volta ao asteróide geral
+	;MOV [COLOCA_CENARIO_FRONTAL], R7  ; troca o ecrã de píxeis 
     CMP R10, 1                        ; verifica se está a jogar
 	JNZ ciclo_asteroide1			  ; se não estiver volta ao ciclo
 	CALL verifica_se_pode_desenhar_na_posicao
