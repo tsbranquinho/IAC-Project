@@ -329,6 +329,7 @@ loop_sondas:						; inicializa todas as instâncias do processa sonda
 						        	; cada processo fica com uma cópia independente dos registos
 	CMP  R7, 0			        	; verifica se já criou todas as instâncias
     JNZ	loop_sondas		   			; se ainda não criou volta para o loop
+	JMP controlo
 
 
 ; ******************************************************************************
@@ -336,10 +337,9 @@ loop_sondas:						; inicializa todas as instâncias do processa sonda
 ; ******************************************************************************
 
 espera_inicio:
-	MOV R0, [tecla_carregada]
 	MOV R1, TECLA_C
 	CMP R0, R1
-	JNZ espera_inicio
+	JNZ controlo
 	MOV R0, 1
 	MOV [estado_jogo], R0
 
@@ -347,6 +347,8 @@ setup:
 
 	MOV  [APAGA_AVISO], R1			  ; apaga o aviso de nenhum cenário selecionado (o valor de R1 não é relevante)
     MOV  [APAGA_ECRÃ], R1			  ; apaga todos os pixels já desenhados (o valor de R1 não é relevante)
+	MOV  R1, 1						  ; imagem número 1
+	MOV  [APAGA_CENARIO_FUNDO], R1    ; apaga a imagem número 1 (caso esteja desenhada)
 	MOV  R1, 0                        ; vídeo número 0
 	MOV  [REPRODUZ], R1				  ; reproduz o vídeo número 0
 	;MOV	 R7, 1					  ; valor a somar à coluna do boneco, para o movimentar       ****************TIRAR EM PRINCIPIO*********
@@ -365,12 +367,16 @@ setup:
 	CALL desenha_nave				  ; desenha a nave
 
 controlo:
+	MOV R0, [tecla_carregada]
+	MOV R11, [estado_jogo]
+	CMP R11, 0
+	JZ  espera_inicio
+	CMP R11, 3
+	JZ  espera_inicio
 	MOV R1, 1
     ;MOV [R4], R11      				  ; escreve linha e coluna a zero nos displays
 
 obtem_tecla:
-	MOV R0, [tecla_carregada]
-	MOV R11, [estado_jogo]
 	CMP R11, 1
 	JZ  call_verifica_tecla
 	CMP R11, 2
@@ -415,6 +421,10 @@ verifica_tecla_pausa:
 	CMP R6, R0
 	JZ  retoma_jogo
 
+	MOV R6, TECLA_F
+	CMP R6, R0
+	JZ  termina_jogo
+	  
 	RET
 
 ;ativa_tecla_0:
@@ -824,21 +834,21 @@ energia:
 	JNZ energia
 	MOV R11, [energia_total]
 	SUB R11, 3
-	;CALL verifica_fim_jogo
+	CALL verifica_fim_jogo
 	MOV [energia_total], R11
 	CALL mostra_display               ; atualiza valor do display
 	JMP energia
 
-;verifica_fim_jogo:
-;	CMP R11, 0
-;	JLE fim_jogo
-;	RET
-;
-;fim_jogo:
-;	MOV R10, 3						  ; estado de jogo = 3 (fim de jogo)
-;	MOV [estado_jogo], R10
-;	CALL mostra_display
-;	RET
+verifica_fim_jogo:
+	CMP R11, 0
+	JLE fim_jogo
+	RET
+
+fim_jogo:
+	MOV R10, 3						  ; estado de jogo = 3 (fim de jogo)
+	MOV [estado_jogo], R10
+	CALL mostra_display
+	RET
 ; ******************************************************************************
 ; *************************** PSEUDO-ALEATÓRIO *********************************
 ; ******************************************************************************
@@ -1219,9 +1229,9 @@ verifica_colisao_nave:
 	
 houve_colisao_nave:
 	MOV R10, 1
-	;MOV R3, [estado_jogo]
-	;MOV R3, 3
-	;MOV [estado_jogo], R3
+	MOV R3, [estado_jogo]
+	MOV R3, 3
+	MOV [estado_jogo], R3
 	RET
 
 colisao_sonda:
