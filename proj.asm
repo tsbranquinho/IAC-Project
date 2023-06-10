@@ -73,10 +73,8 @@ COL_AST_DIR         EQU 59						; coluna do asteroide que aparece à direita (pr
 LARGURA_AST			EQU	5						; largura do asteroide
 ALTURA_AST			EQU 5						; altura do asteroide
 
-
-
 MIN_COLUNA			EQU  0						; número da coluna mais à esquerda que o objeto pode ocupar
-MAX_COLUNA			EQU  63     				; número da coluna mais à direita que o objeto pode ocupar
+MAX_COLUNA			EQU  63     				; número da coluna mais à direita que o objeto pode ocupar		   ***** TIRAR PROVAVELMENTE ESTAS 3 CONSTANTES ****
 ATRASO				EQU	400H					; atraso para limitar a velocidade de movimento do boneco
 
 				
@@ -366,7 +364,6 @@ setup:
 	MOV  [APAGA_CENARIO_FUNDO], R1    ; apaga a imagem número 1 (caso esteja desenhada)
 	MOV  R1, 0                        ; vídeo número 0
 	MOV  [REPRODUZ], R1				  ; reproduz o vídeo número 0
-	;MOV	 R7, 1					  ; valor a somar à coluna do boneco, para o movimentar       ****************TIRAR EM PRINCIPIO*********
 	MOV  R11, 100					  ; valor do display inicial do jogo
 	MOV [energia_total], R11		  ; valor da energia total
 	CALL mostra_display				  ; mostra o valor da energia total no display
@@ -375,10 +372,6 @@ setup:
 	MOV R11, 0						  ; valor da nave atual
 	MOV [nave_atual], R11			  ; guarda o valor da nave atual
 	;MOV R11, 5                       ; não há asteroides
-	;MOV [asteroide1], R11			  ; guarda o valor do asteroide 1
-	;MOV [asteroide2], R11			  ; guarda o valor do asteroide 2
-	;MOV [asteroide3], R11			  ; guarda o valor do asteroide 3
-	;MOV [asteroide4], R11			  ; guarda o valor do asteroide 4
 	CALL desenha_nave				  ; desenha a nave
 
 controlo:
@@ -641,9 +634,9 @@ teclado:
     MOV  R2, TEC_LIN   				  ; endereço do periférico das linhas
     MOV  R3, TEC_COL   				  ; endereço do periférico das colunas~
 
-reseta_r1:
-	MOV R1, 1
-	JMP espera_tecla
+reseta_r1:							  ; reseta o valor da linha a testar
+	MOV R1, 1						  ; primeira linha
+	JMP espera_tecla				  ; salta para esperar pela tecla
 
 rol_r1:
 	ROL R1, 1
@@ -861,8 +854,9 @@ verifica_fim_jogo:
 
 fim_jogo:
 	MOV R10, 3						  ; estado de jogo = 3 (fim de jogo)
-	MOV [estado_jogo], R10
-	CALL mostra_display
+	MOV [estado_jogo], R10			  ; guarda o estado de jogo na memória
+	CALL mostra_display				  ; mostra o display
+	MOV  [PAUSA], R1				  ; reproduz o vídeo número 0
 	RET
 ; ******************************************************************************
 ; *************************** PSEUDO-ALEATÓRIO *********************************
