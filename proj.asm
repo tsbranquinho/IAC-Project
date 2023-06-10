@@ -7,7 +7,7 @@
 ; * IST 1106635 - Tiago Branquinho
 ; * IST 1107059 - Pedro Loureiro
 ; *
-; * Descrição: Entrega final do projeto
+; * Descrição: Entrega final
 
 
 
@@ -1166,19 +1166,19 @@ verifica_colisao_sonda:
 	POP R0
 	RET		
 
+
 houve_colisao_sonda:
 	CMP R1, 0						 ; se for 0, é minerável
 	JNZ colisao_nao_mineravel
+	MOV R3, [evento_int]
+	CALL apaga_ast
+	MOV R4, DEF_AST_EXPLOSAO
 	MOV R1, 0						 ; resetar colisão
 	MOV [R11 + R0], R1				 ; escrever 0 no endereço
 	MOV R2, 2						 ; executar som 2
 	MOV [REPRODUZ], R2				 ; reproduzir som
-	MOV R3, [evento_int]
-	CALL apaga_ast
-	MOV R4, DEF_AST_EXPLOSAO
 	CALL desenha_ast
 	MOV R3, [evento_int]
-	CALL apaga_ast
 	POP R3
 	POP R2
 	POP R1
@@ -1186,22 +1186,21 @@ houve_colisao_sonda:
 	RET
 
 colisao_nao_mineravel:
+	MOV R3, [evento_int]
+	CALL apaga_ast
+	MOV R4, DEF_ASTE_EXPLOSAO
 	MOV R2, 3						 ; executar som 3
 	MOV [REPRODUZ], R2				 ; reproduzir som da colisão com o asteróide não minerável
 	MOV R1, 0						 ; resetar colisão
 	MOV [R11 + R0], R1				 ; escrever 0 no endereço
-	MOV R3, [evento_int]
-	CALL apaga_ast
-	MOV R4, DEF_ASTE_EXPLOSAO
 	CALL desenha_ast
 	MOV R3, [evento_int]
-	CALL apaga_ast
 	POP R3
 	POP R2
 	POP R1
 	POP R0
 	RET
-
+	
 ; ******************************************************************************
 ; ********************************* SONDAS *************************************
 ; ******************************************************************************
