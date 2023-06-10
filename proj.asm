@@ -7,7 +7,7 @@
 ; * IST 1106635 - Tiago Branquinho
 ; * IST 1107059 - Pedro Loureiro
 ; *
-; * Descrição: Entrega final
+; * Descrição: Entrega final do projeto
 
 
 
