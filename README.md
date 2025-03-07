@@ -31,4 +31,4 @@ To explore and run the project:
    ```bash
    cd IAC-Project
 
-3. **Open the assembly code (proj.asm) with, preferrably, Azul Zulu 11 virtual machine with the simulator available
+3. **Open the assembly code (proj.asm) with, preferrably, Azul Zulu 11 virtual machine with the simulator available**
